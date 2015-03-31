@@ -1,0 +1,11 @@
+.Python
+*.egg/
+*.egg
+bin/
+lib/
+include/
+src/
+dist/
+sphinxcontrib_dotnetdomain.egg-info/
+*.pyc
+*.sw[opmn]
