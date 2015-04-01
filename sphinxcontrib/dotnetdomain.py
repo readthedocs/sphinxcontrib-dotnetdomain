@@ -127,11 +127,12 @@ class DotNetObject(ObjectDescription):
         prefix = self.env.temp_data.get('dn:prefix', None)
         objectname = self.env.temp_data.get('dn:object')
 
-        if prefix and sig.prefix == prefix:
-            sig.prefix = None
+        # TODO set prefix better here, or set on class method
+        if prefix is not None:
+            sig.prefix = prefix
 
         signode['object'] = sig.member
-        signode['package'] = sig.prefix
+        signode['prefix'] = sig.prefix
         signode['fullname'] = sig.full_name()
 
         if self.display_prefix:
@@ -149,7 +150,8 @@ class DotNetObject(ObjectDescription):
                 # TODO replace this
                 _pseudo_parse_arglist(signode, ', '.join(sig.arguments))
 
-        # TODO this should be prefix?
+        if isinstance(self, DotNetObjectNested):
+            return sig.full_name(), sig.full_name()
         return sig.full_name(), sig.prefix
 
     def add_target_and_index(self, name_obj, sig, signode):
@@ -184,7 +186,7 @@ class DotNetObject(ObjectDescription):
             if not obj:
                 return _('%s() (built-in function)') % name
             return _('%s() (%s method)') % (name, obj)
-        elif self.objtype == 'package':
+        elif self.objtype == 'namespace':
             return _('%s (package)') % name
         elif self.objtype == 'data':
             return _('%s (global variable or constant)') % name
@@ -200,20 +202,22 @@ class DotNetObject(ObjectDescription):
 class DotNetObjectNested(DotNetObject):
     '''Nestable object'''
 
+    prefix_set = False
+
     def before_content(self):
         '''Build up prefix with nested elements'''
         super(DotNetObjectNested, self).before_content()
         prefix_existing = self.env.temp_data.get('dn:prefix', None)
-        print('Existing prefix: %s' % prefix_existing)
         if self.names:
             (parent, prefix) = self.names.pop()
-            print('New prefix: %s' % prefix)
+            if prefix_existing is not None:
+                prefix = '.'.join([prefix_existing, prefix])
             self.env.temp_data['dn:prefix'] = prefix
-            self.clsname_set = True
+            self.prefix_set = True
 
     def after_content(self):
         super(DotNetObjectNested, self).after_content()
-        if self.clsname_set:
+        if self.prefix_set:
             self.env.temp_data['dn:prefix'] = None
 
 
@@ -286,7 +290,7 @@ class DotNetXRefRole(XRefRole):
 
     def process_link(self, env, refnode, has_explicit_title, title, target):
         refnode['dn:object'] = env.temp_data.get('dn:object')
-        refnode['dn:namespace'] = env.temp_data.get('dn:namespace')
+        refnode['dn:prefix'] = env.temp_data.get('dn:prefix')
         if not has_explicit_title:
             title = title.lstrip('.')
             # TODO tilde?
@@ -302,7 +306,7 @@ class DotNetXRefRole(XRefRole):
         return title, target
 
 
-_types = [
+_domain_types = [
     DotNetNamespace,
     DotNetClass,
     DotNetStructure,
@@ -322,11 +326,11 @@ class DotNetDomain(Domain):
     label = '.NET'
 
     object_types = dict((cls.long_name, cls.get_type())
-                        for cls in _types)
+                        for cls in _domain_types)
     directives = dict((cls.long_name, cls)
-                     for cls in _types)
+                     for cls in _domain_types)
     roles = dict((cls.short_name, DotNetXRefRole())
-                 for cls in _types)
+                 for cls in _domain_types)
 
     initial_data = {
         'objects': {}, # fullname -> docname, objtype
@@ -337,11 +341,11 @@ class DotNetDomain(Domain):
             if fn == docname:
                 del self.data['objects'][fullname]
 
-    def find_obj(self, env, pkg, name, obj_type, searchorder=0):
+    def find_obj(self, env, prefix, name, obj_type, searchorder=0):
         '''Find object reference
 
         :param env: Build environment
-        :param pkg: Object package
+        :param prefix: Object prefix
         :param name: Object name
         :param obj_type: Object type
         :param searchorder: Search for exact match
@@ -357,18 +361,18 @@ class DotNetDomain(Domain):
         matches = []
         newname = None
 
-        if pkg is not None:
-            fullname = '.'.join([pkg, name])
+        if prefix is not None:
+            fullname = '.'.join([prefix, name])
 
         if searchorder == 1:
-            if pkg and fullname in objects:
+            if prefix and fullname in objects:
                 newname = fullname
             else:
                 newname = name
         else:
             if name in objects:
                 newname = name
-            elif pkg and fullname in objects:
+            elif prefix and fullname in objects:
                 newname = fullname
 
         return newname, objects.get(newname)
@@ -376,10 +380,10 @@ class DotNetDomain(Domain):
     def resolve_xref(self, env, fromdocname, builder, obj_type, target, node,
                      contnode):
         objectname = node.get('dn:object')
-        namespace = node.get('dn:namespace')
+        prefix = node.get('dn:prefix')
         searchorder = node.hasattr('refspecific') and 1 or 0
 
-        name, obj = self.find_obj(env, namespace, target, obj_type, searchorder)
+        name, obj = self.find_obj(env, prefix, target, obj_type, searchorder)
 
         if not obj:
             return None
