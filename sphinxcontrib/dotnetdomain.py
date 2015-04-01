@@ -275,10 +275,28 @@ class DotNetMethod(DotNetCallable):
     long_name = 'method'
 
 
+class DotNetConstructor(DotNetCallable):
+    class_object = True
+    short_name = 'ctor'
+    long_name = 'constructor'
+
+
 class DotNetProperty(DotNetCallable):
     class_object = True
     short_name = 'prop'
     long_name = 'property'
+
+
+class DotNetField(DotNetCallable):
+    class_object = True
+    short_name = 'field'
+    long_name = 'field'
+
+
+class DotNetOperator(DotNetCallable):
+    class_object = True
+    short_name = 'op'
+    long_name = 'operator'
 
 
 # Cross referencing
@@ -312,6 +330,9 @@ _domain_types = [
 
     DotNetMethod,
     DotNetProperty,
+    DotNetConstructor,
+    DotNetField,
+    DotNetOperator,
 ]
 
 
