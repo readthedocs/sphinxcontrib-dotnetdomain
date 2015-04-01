@@ -207,11 +207,8 @@ class DotNetObjectNested(DotNetObject):
     def before_content(self):
         '''Build up prefix with nested elements'''
         super(DotNetObjectNested, self).before_content()
-        prefix_existing = self.env.temp_data.get('dn:prefix', None)
         if self.names:
             (parent, prefix) = self.names.pop()
-            if prefix_existing is not None:
-                prefix = '.'.join([prefix_existing, prefix])
             self.env.temp_data['dn:prefix'] = prefix
             self.prefix_set = True
 
