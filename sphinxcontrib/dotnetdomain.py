@@ -127,7 +127,6 @@ class DotNetObject(ObjectDescription):
         prefix = self.env.temp_data.get('dn:prefix', None)
         objectname = self.env.temp_data.get('dn:object')
 
-        # TODO set prefix better here, or set on class method
         if prefix is not None:
             sig.prefix = prefix
 
@@ -138,7 +137,7 @@ class DotNetObject(ObjectDescription):
         if self.display_prefix:
             signode += addnodes.desc_annotation(self.display_prefix,
                                                 self.display_prefix)
-        # TODO detect prefix that joins namespace and class/struct/etc
+
         if sig.prefix is not None:
             signode += addnodes.desc_addname(sig.prefix + '.', sig.prefix + '.')
 
@@ -180,7 +179,7 @@ class DotNetObject(ObjectDescription):
                                               ''))
 
     def get_index_text(self, objectname, name_obj):
-        # TODO wtf does this do?
+        # TODO this should inspect classes, not this objtype nonsense
         name, obj = name_obj
         if self.objtype == 'function':
             if not obj:
