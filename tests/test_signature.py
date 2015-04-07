@@ -32,3 +32,10 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(sig.full_name(), 'Foo.Bar.test')
         sig = DotNetSignature.from_string('test(something)')
         self.assertEqual(sig.full_name(), 'test')
+
+    def test_generic_type(self):
+        '''Generic type declartion in signature'''
+        sig = DotNetSignature.from_string('Foo.Bar`0')
+        self.assertEqual(sig.full_name(), 'Foo.Bar`0')
+        sig = DotNetSignature.from_string('Foo.Bar`99')
+        self.assertEqual(sig.full_name(), 'Foo.Bar`99')
