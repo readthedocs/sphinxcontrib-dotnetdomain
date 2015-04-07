@@ -127,6 +127,10 @@ class DotNetObject(ObjectDescription):
         prefix = self.env.temp_data.get('dn:prefix', None)
         objectname = self.env.temp_data.get('dn:object')
 
+        if not sig.member:
+            print "Unhandled Sig: %s" % sig
+            raise ValueError('No Member Found')
+
         if prefix is not None:
             sig.prefix = prefix
 
