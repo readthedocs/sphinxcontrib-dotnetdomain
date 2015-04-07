@@ -44,7 +44,7 @@ class DotNetSignature(object):
         re_signature = re.compile(
             r'''
             ^(?:(?P<prefix>[\w\_\-\.]+)\.|)
-            (?P<member>[\w\_\-]+(?:\`[0-9]+)?)
+            (?P<member>[\w\_\-]+(?:[\`]{1,2}[0-9]+)?)
             (?:\((?P<arguments>[^)]+)\)|)$
             ''',
             re.VERBOSE)
