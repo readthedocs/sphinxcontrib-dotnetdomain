@@ -24,6 +24,12 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(sig.member, 'test')
         self.assertIn('something', sig.arguments)
 
+    def test_non_matching(self):
+        '''Non matching signature should return signature class instance'''
+        sig = DotNetSignature.from_string('#this&will%never*parse')
+        self.assertIsNotNone(sig)
+        self.assertTrue(isinstance(sig, DotNetSignature))
+
     def test_full_name(self):
         '''Full name output'''
         sig = DotNetSignature.from_string('Foo.Bar')

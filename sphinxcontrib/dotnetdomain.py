@@ -29,7 +29,7 @@ class DotNetSignature(object):
             List of arguments
     '''
 
-    def __init__(self, prefix, member, arguments):
+    def __init__(self, prefix=None, member=None, arguments=None):
         self.prefix = prefix
         self.member = member
         self.arguments = arguments
