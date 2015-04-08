@@ -297,6 +297,11 @@ class DotNetField(DotNetCallable):
     long_name = 'field'
 
 
+class DotNetEvent(DotNetCallable):
+    class_object = True
+    short_name = 'event'
+    long_name = 'event'
+
 class DotNetOperator(DotNetCallable):
     class_object = True
     short_name = 'op'
@@ -336,6 +341,7 @@ _domain_types = [
     DotNetProperty,
     DotNetConstructor,
     DotNetField,
+    DotNetEvent,
     DotNetOperator,
 ]
 
