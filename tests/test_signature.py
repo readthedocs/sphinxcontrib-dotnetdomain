@@ -1,6 +1,7 @@
 '''Test .NET signature parsing'''
 
 import unittest
+import time
 
 from sphinxcontrib.dotnetdomain import DotNetSignature
 
@@ -46,3 +47,12 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(sig.full_name(), 'Foo.Bar`99')
         sig = DotNetSignature.from_string('Foo.Bar``0')
         self.assertEqual(sig.full_name(), 'Foo.Bar``0')
+
+    def test_slow_backtrack(self):
+        '''Slow query because of excessive backtracking'''
+        time_start = time.time()
+        sig = DotNetSignature.from_string('Microsoft.CodeAnalysis.Classification.ClassificationTypeNames.XmlDocCommentAttributeName')
+        self.assertEqual(sig.prefix, 'Microsoft.CodeAnalysis.Classification.ClassificationTypeNames')
+        self.assertEqual(sig.member, 'XmlDocCommentAttributeName')
+        time_end = time.time()
+        self.assertTrue((time_end - time_start) < 2)
