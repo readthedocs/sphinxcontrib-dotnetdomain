@@ -107,7 +107,7 @@ class DotNetObject(ObjectDescription):
     short_name = None
     long_name = None
 
-    def handle_signature(self, sig, signode):
+    def handle_signature(self, sig_input, signode):
         '''Parses out pieces from construct signatures
 
         Parses out prefix and argument list from construct definition. This is
@@ -123,13 +123,14 @@ class DotNetObject(ObjectDescription):
             Altered :py:data:`signode` with attributes corrected for rST
             nesting/etc
         '''
-        sig = DotNetSignature.from_string(sig.strip())
+        sig = DotNetSignature.from_string(sig_input.strip())
         prefix = self.env.temp_data.get('dn:prefix', None)
         objectname = self.env.temp_data.get('dn:object')
 
         if not sig.member:
-            self.env.warn(
-                self.env.docname, 'Parsing signature failed', self.lineno)
+            self.env.warn(self.env.docname,
+                          'Parsing signature failed: "{}"'.format(sig_input),
+                          self.lineno)
             raise ValueError('No Member Found')
 
         if prefix is not None:
