@@ -14,6 +14,18 @@ from sphinx.domains.python import _pseudo_parse_arglist
 from sphinx.util.nodes import make_refnode
 from sphinx.util.docfields import Field, GroupedField, TypedField
 
+# Global regex parsing
+_re_parts = {}
+_re_parts['type'] = r'(?:[\`]{1,2}[0-9]+)?'
+_re_parts['name'] = r'[\w\_\-]+%(type)s' % _re_parts
+_re_intermediate = (
+    r'''
+        ^(?:(?P<prefix>(?:%(name)s\.?){1,})\.)?
+        (?P<member>%(name)s)
+        (?:\((?P<arguments>[^)]+)\))?$
+    ''' % _re_parts)
+_re_signature = re.compile(_re_intermediate, re.VERBOSE)
+
 
 class DotNetSignature(object):
     '''Signature parsing for .NET directives
@@ -41,14 +53,7 @@ class DotNetSignature(object):
         :param signature: construct definition
         :type signature: string
         '''
-        re_signature = re.compile(
-            r'''
-            ^(?:(?P<prefix>[\w\_\-\.]+)\.|)
-            (?P<member>[\w\_\-]+(?:[\`]{1,2}[0-9]+)?)
-            (?:\((?P<arguments>[^)]+)\)|)$
-            ''',
-            re.VERBOSE)
-        match = re_signature.match(signature)
+        match = _re_signature.match(signature)
         if match:
             arg_string = match.group('arguments')
             arguments = None
@@ -59,7 +64,7 @@ class DotNetSignature(object):
                 member=match.group('member'),
                 arguments=arguments
             )
-        return cls()
+        raise ValueError('Could not parse signature: {0}'.format(signature))
 
     def full_name(self):
         '''Return full name of member'''
