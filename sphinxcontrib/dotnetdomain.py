@@ -128,15 +128,17 @@ class DotNetObject(ObjectDescription):
             Altered :py:data:`signode` with attributes corrected for rST
             nesting/etc
         '''
-        sig = DotNetSignature.from_string(sig_input.strip())
-        prefix = self.env.temp_data.get('dn:prefix', None)
-        objectname = self.env.temp_data.get('dn:object')
-
-        if not sig.member:
+        try:
+            sig = DotNetSignature.from_string(sig_input.strip())
+        except ValueError:
             self.env.warn(self.env.docname,
                           'Parsing signature failed: "{}"'.format(sig_input),
                           self.lineno)
-            raise ValueError('No Member Found')
+            raise
+
+        prefix = self.env.temp_data.get('dn:prefix', None)
+        objectname = self.env.temp_data.get('dn:object')
+
 
         if prefix is not None:
             sig.prefix = prefix
