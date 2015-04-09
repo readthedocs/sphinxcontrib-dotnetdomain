@@ -17,10 +17,10 @@ from sphinx.util.docfields import Field, GroupedField, TypedField
 # Global regex parsing
 _re_parts = {}
 _re_parts['type'] = r'(?:[\`]{1,2}[0-9]+)?'
-_re_parts['name'] = r'[\w\_\-]+%(type)s' % _re_parts
+_re_parts['name'] = r'[\w\_\-]+?%(type)s' % _re_parts
 _re_intermediate = (
     r'''
-        ^(?:(?P<prefix>(?:%(name)s\.?){1,})\.)?
+        ^(?:(?P<prefix>.+)\.)?
         (?P<member>%(name)s)
         (?:\((?P<arguments>[^)]+)\))?$
     ''' % _re_parts)
