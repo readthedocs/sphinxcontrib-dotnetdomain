@@ -128,7 +128,8 @@ class DotNetObject(ObjectDescription):
         objectname = self.env.temp_data.get('dn:object')
 
         if not sig.member:
-            print "Unhandled Sig: %s" % sig
+            self.env.warn(
+                self.env.docname, 'Parsing signature failed', self.lineno)
             raise ValueError('No Member Found')
 
         if prefix is not None:
