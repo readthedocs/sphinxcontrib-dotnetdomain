@@ -12,7 +12,7 @@ from sphinx.directives import ObjectDescription
 from sphinx.roles import XRefRole
 from sphinx.domains.python import _pseudo_parse_arglist
 from sphinx.util.nodes import make_refnode
-from sphinx.util.docfields import Field, GroupedField, TypedField
+from sphinx.util.docfields import Field, TypedField
 
 # Global regex parsing
 _re_parts = {}
@@ -28,6 +28,7 @@ _re_signature = re.compile(_re_intermediate, re.VERBOSE)
 
 
 class DotNetSignature(object):
+
     '''Signature parsing for .NET directives
 
     Attributes
@@ -84,6 +85,7 @@ class DotNetSignature(object):
 
 
 class DotNetObject(ObjectDescription):
+
     '''Description of a .NET construct object.
 
     Class variables
@@ -137,7 +139,6 @@ class DotNetObject(ObjectDescription):
             raise
 
         prefix = self.env.temp_data.get('dn:prefix', None)
-        objectname = self.env.temp_data.get('dn:object')
 
 
         if prefix is not None:
@@ -212,6 +213,7 @@ class DotNetObject(ObjectDescription):
 
 
 class DotNetObjectNested(DotNetObject):
+
     '''Nestable object'''
 
     prefix_set = False
@@ -231,6 +233,7 @@ class DotNetObjectNested(DotNetObject):
 
 
 class DotNetCallable(DotNetObject):
+
     '''An object that is callable with arguments'''
     has_arguments = True
     doc_field_types = [
@@ -311,6 +314,7 @@ class DotNetEvent(DotNetCallable):
     short_name = 'event'
     long_name = 'event'
 
+
 class DotNetOperator(DotNetCallable):
     class_object = True
     short_name = 'op'
@@ -331,7 +335,7 @@ class DotNetXRefRole(XRefRole):
                 title = title[1:]
                 dot = title.rfind('.')
                 if dot != -1:
-                    title = title[dot+1:]
+                    title = title[dot + 1:]
         if target[0:1] == '.':
             target = target[1:]
             refnode['refspecific'] = True
@@ -413,12 +417,12 @@ class DotNetDomain(Domain):
     object_types = dict((cls.long_name, cls.get_type())
                         for cls in _domain_types)
     directives = dict((cls.long_name, cls)
-                     for cls in _domain_types)
+                      for cls in _domain_types)
     roles = dict((cls.short_name, DotNetXRefRole())
                  for cls in _domain_types)
 
     initial_data = {
-        'objects': {}, # fullname -> docname, objtype
+        'objects': {},  # fullname -> docname, objtype
     }
 
     indices = [
@@ -447,7 +451,6 @@ class DotNetDomain(Domain):
             return []
 
         objects = self.data['objects']
-        matches = []
         newname = None
 
         if prefix is not None:
@@ -468,7 +471,6 @@ class DotNetDomain(Domain):
 
     def resolve_xref(self, env, fromdocname, builder, obj_type, target, node,
                      contnode):
-        objectname = node.get('dn:object')
         prefix = node.get('dn:prefix')
         searchorder = node.hasattr('refspecific') and 1 or 0
 
@@ -484,7 +486,7 @@ class DotNetDomain(Domain):
         # TODO wtf does this do?
         for refname, (docname, type) in self.data['objects'].iteritems():
             yield refname, refname, type, docname, \
-                  refname.replace('$', '_S_'), 1
+                refname.replace('$', '_S_'), 1
 
 
 def setup(app):
