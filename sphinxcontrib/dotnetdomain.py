@@ -6,7 +6,7 @@ API documentation support for .NET langauges
 import re
 
 from sphinx import addnodes
-from sphinx.domains import Domain, ObjType
+from sphinx.domains import Domain, ObjType, Index
 from sphinx.locale import l_, _
 from sphinx.directives import ObjectDescription
 from sphinx.roles import XRefRole
@@ -355,7 +355,56 @@ _domain_types = [
 ]
 
 
+class DotNetIndex(Index):
+
+    """
+    Index subclass to provide the Ada module index.
+    """
+
+    name = 'modindex'
+    localname = l_('.Net Module Index')
+    shortname = l_('.Net modules')
+
+    def generate(self, docnames=None):
+        content = {}
+        # list of all modules, sorted by module name
+        modules = sorted(self.domain.data['objects'].iteritems(),
+                         key=lambda x: x[0].lower())
+        for modname, (docname, _type) in modules:
+            if docnames and docname not in docnames:
+                continue
+
+            if _type != 'namespace':
+                continue
+
+            letter = modname.split('.')[-1][0]
+
+            entries = content.setdefault(letter.lower(), [])
+
+            subtype = 0
+            qualifier = ''
+            synopysis = ''
+            extra = ''
+            anchor = modname
+
+            entries.append([
+                modname,  # name
+                subtype,  # subtype
+                'autoapi/' + '/'.join(modname.split('.')) + '/index',  # docname
+                anchor,  # Anchor
+                extra,  # Extra
+                qualifier,
+                synopysis,
+            ])
+
+        # sort by first letter
+        content = sorted(content.iteritems())
+
+        return content, False
+
+
 class DotNetDomain(Domain):
+
     '''.NET language domain.'''
 
     name = 'dn'
@@ -371,6 +420,10 @@ class DotNetDomain(Domain):
     initial_data = {
         'objects': {}, # fullname -> docname, objtype
     }
+
+    indices = [
+        DotNetIndex,
+    ]
 
     def clear_doc(self, docname):
         for fullname, (fn, _) in self.data['objects'].items():
