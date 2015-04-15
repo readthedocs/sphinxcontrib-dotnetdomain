@@ -140,7 +140,6 @@ class DotNetObject(ObjectDescription):
 
         prefix = self.env.temp_data.get('dn:prefix', None)
 
-
         if prefix is not None:
             sig.prefix = prefix
 
@@ -152,7 +151,8 @@ class DotNetObject(ObjectDescription):
             signode += addnodes.desc_annotation(self.display_prefix,
                                                 self.display_prefix)
 
-        if sig.prefix is not None:
+        # Show prefix only on shorter declarations
+        if sig.prefix is not None and not self.has_arguments:
             signode += addnodes.desc_addname(sig.prefix + '.', sig.prefix + '.')
 
         signode += addnodes.desc_name(sig.member, sig.member)
