@@ -360,9 +360,8 @@ _domain_types = [
 
 
 class DotNetIndex(Index):
-
     """
-    Index subclass to provide the Ada module index.
+    Index subclass to provide the .NET module index.
     """
 
     name = 'modindex'
