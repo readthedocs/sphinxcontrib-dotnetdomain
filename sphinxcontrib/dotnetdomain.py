@@ -14,6 +14,9 @@ from sphinx.domains.python import _pseudo_parse_arglist
 from sphinx.util.nodes import make_refnode
 from sphinx.util.docfields import Field, TypedField
 
+from docutils.parsers.rst import directives
+
+
 # Global regex parsing
 _re_parts = {}
 _re_parts['type'] = r'(?:[\`]{1,2}[0-9]+)?'
@@ -85,7 +88,6 @@ class DotNetSignature(object):
 
 
 class DotNetObject(ObjectDescription):
-
     '''Description of a .NET construct object.
 
     Class variables
@@ -213,10 +215,29 @@ class DotNetObject(ObjectDescription):
 
 
 class DotNetObjectNested(DotNetObject):
-
     '''Nestable object'''
 
     prefix_set = False
+    option_spec = {
+        'noindex': directives.flag,
+        'hidden': directives.flag,
+    }
+
+    def run(self):
+        '''If element is considered hidden, drop the desc_signature node
+
+        The default handling of signatures by :py:cls:`ObjectDescription`
+        returns a list of nodes with the signature nodes. We are going to remove
+        them if this is a hidden declaration.
+        '''
+        nodes = super(DotNetObjectNested, self).run()
+        if 'hidden' in self.options:
+            for node in nodes:
+                if isinstance(node, addnodes.desc):
+                    for (m, child) in enumerate(node.children):
+                        if isinstance(child, addnodes.desc_signature):
+                            _ = node.children.pop(m)
+        return nodes
 
     def before_content(self):
         '''Build up prefix with nested elements'''
