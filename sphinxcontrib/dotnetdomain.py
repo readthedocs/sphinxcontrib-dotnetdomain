@@ -19,7 +19,7 @@ from docutils.parsers.rst import directives
 
 # Global regex parsing
 _re_parts = {}
-_re_parts['type'] = r'(?:[\`]{1,2}[0-9]+)?'
+_re_parts['type'] = r'(?:[\`]{1,2}[0-9]+|\<T[0-9]?\>)?'
 _re_parts['name'] = r'[\w\_\-]+?%(type)s' % _re_parts
 _re_intermediate = (
     r'''

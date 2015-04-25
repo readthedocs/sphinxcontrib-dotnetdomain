@@ -47,6 +47,8 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(sig.full_name(), 'Foo.Bar`99')
         sig = DotNetSignature.from_string('Foo.Bar``0')
         self.assertEqual(sig.full_name(), 'Foo.Bar``0')
+        sig = DotNetSignature.from_string('Foo.Bar<T>')
+        self.assertEqual(sig.full_name(), 'Foo.Bar<T>')
 
     def test_slow_backtrack(self):
         '''Slow query because of excessive backtracking'''
