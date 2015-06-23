@@ -23,8 +23,6 @@ Contents
    :glob:
    :maxdepth: 2
 
-   config
-   templates
    design
 
 .. toctree::
