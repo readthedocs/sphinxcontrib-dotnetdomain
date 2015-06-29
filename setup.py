@@ -36,5 +36,5 @@ setup(
     install_requires=['Sphinx>=0.6'],
     namespace_packages=['sphinxcontrib'],
     test_suite='nose.collector',
-    tests_require=['nose'],
+    tests_require=['nose', 'mock'],
 )
