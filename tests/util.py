@@ -1,3 +1,6 @@
+import unittest
+import os
+import shutil
 from textwrap import dedent
 
 from mock import patch
@@ -34,10 +37,61 @@ class MockTestBuilder(TextBuilder):
 
     def __init__(self, *args, **kwargs):
         self.output = {}
-        return super(MockTestBuilder, self).__init__(*args, **kwargs)
+        super(MockTestBuilder, self).__init__(*args, **kwargs)
 
     def write_doc(self, docname, doctree):
         self.current_docname = docname
         destination = StringOutput(encoding='utf-8')
         self.writer.write(doctree, destination)
         self.output[docname] = self.writer.output
+
+
+class SphinxTestCase(unittest.TestCase):
+    '''Test case that processes build input/output in memory for the most part
+
+    Sets up a mocked out Sphinx application with a custom builder and string
+    input to the build process.
+    '''
+
+    def setUp(self):
+        os.chdir(os.path.join(os.path.dirname(__file__), 'fixtures', 'example'))
+        self.app = MockSphinx(
+            srcdir='.',
+            confdir='.',
+            outdir='_build/text',
+            doctreedir='_build/.doctrees',
+            buildername=None,
+        )
+
+    def tearDown(self):
+        shutil.rmtree(os.path.join(os.path.dirname(__file__), 'fixtures',
+                                   'example', '_build'))
+
+    def assertRef(self, refname, type_=None, docname=None, domain='dn'):
+        '''Assert reference is found and matches criteria
+
+        :param refname: Reference name to lookup
+        :param type_: Reference type to match
+        :param docname: Reference docname
+        :param domain: Domain moniker to use on lookup (default: dn)
+        '''
+        try:
+            ref = self.app.env.domaindata[domain]['objects'][refname]
+            (ref_docname, ref_type) = ref
+            if type_ is not None and ref_type != type_:
+                raise AssertionError('Reference type mismatch: {0} != {1}'
+                                     .format(type_, ref_type))
+            if docname is not None and ref_docname != docname:
+                raise AssertionError('Reference docname mismatch: {0} != {1}'
+                                     .format(docname, ref_docname))
+        except KeyError:
+            raise AssertionError('Reference not found: {0}'.format(refname))
+
+    def assertNotRef(self, *args, **kwargs):
+        '''Inverse of :py:meth:`assertRef`'''
+        try:
+            self.assertRef(*args, **kwargs)
+        except AssertionError:
+            pass
+        else:
+            AssertionError('Reference match found')
