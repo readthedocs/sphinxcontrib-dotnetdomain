@@ -186,20 +186,20 @@ class ReferenceDefinitionTests(SphinxTestCase):
         self.assertRef('ValidClass.MethodNestedGeneric', 'method')
 
     def test_ctor(self):
-        '''Constructor method'''
+        '''Constructor method parsing'''
         self.app._mock_build(
             '''
             .. dn:class:: ValidClass
 
-                .. dn:constructor:: ValidClass()
+                .. dn:constructor:: #ctor()
 
-                .. dn:constructor:: ValidClass(arg1)
-
-                .. dn:constructor:: ValidClass(arg1,arg2)
+            .. dn:constructor:: UnNested.#ctor()
 
             '''
         )
-        # FIXME self.assertRef('ValidClass#ctor', 'constructor')
+        warnings = self.app._warning.getvalue()
+        self.assertRef('ValidClass.#ctor', 'constructor')
+        self.assertRef('UnNested.#ctor', 'constructor')
 
     def test_callable_constructs(self):
         '''Callable constructs on nested constructs

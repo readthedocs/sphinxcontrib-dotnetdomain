@@ -3,7 +3,8 @@
 import unittest
 import time
 
-from sphinxcontrib.dotnetdomain import DotNetCallable, DotNetObjectNested
+from sphinxcontrib.dotnetdomain import (DotNetCallable, DotNetObjectNested,
+                                        DotNetConstructor)
 
 
 class ParseTests(unittest.TestCase):
@@ -70,6 +71,18 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(sig.full_name(), 'Foo.Bar`1')
         sig = DotNetCallable.parse_signature('foobar(arg1, arg2)')
         self.assertEqual(sig.full_name(), 'foobar')
+
+    def test_ctor(self):
+        '''Class constructor methods'''
+        sig = DotNetConstructor.parse_signature('Foo.Bar.#ctor')
+        self.assertEqual(sig.full_name(), 'Foo.Bar.#ctor')
+        sig = DotNetConstructor.parse_signature('Foo.Bar.#ctor(arg1)')
+        self.assertEqual(sig.full_name(), 'Foo.Bar.#ctor')
+
+    def test_ctor_invalid(self):
+        '''Invalid class constructor methods'''
+        self.assertRaises(ValueError, DotNetConstructor.parse_signature,
+                          'Foo.Bar#ctor')
 
     def test_invalid_generic_type(self):
         '''Invalid generic types that shouldn't pass'''
