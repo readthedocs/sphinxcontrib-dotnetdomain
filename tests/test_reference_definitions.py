@@ -50,13 +50,22 @@ class ReferenceDefinitionTests(SphinxTestCase):
 
             .. dn:class:: ClassValid<T>
 
+            .. dn:class:: ClassValid<T><T><T>
+
             .. dn:class:: ClassValid`1
+
+            .. dn:class:: ClassValid`1``0
+
+            .. dn:class:: ClassValid``0
 
             '''
         )
         self.assertRef('ClassValid', 'class')
         self.assertRef('ClassValid<T>', 'class')
+        self.assertRef('ClassValid<T><T><T>', 'class')
         self.assertRef('ClassValid`1', 'class')
+        self.assertRef('ClassValid`1``0', 'class')
+        self.assertRef('ClassValid``0', 'class')
 
     def test_class_invalid(self):
         '''Invalid class parsing'''
@@ -66,7 +75,9 @@ class ReferenceDefinitionTests(SphinxTestCase):
 
             .. dn:class:: ClassParens()
 
-            .. dn:class:: ClassValid`1``0
+            .. dn:class:: ClassValid`0`1
+
+            .. dn:class:: ClassValid`1``1```1
 
             '''
         )
@@ -76,8 +87,10 @@ class ReferenceDefinitionTests(SphinxTestCase):
         assert 'WARNING: Parsing signature failed: "Class NotValid"' in warnings
         self.assertNotRef('ClassParens', 'class')
         assert 'WARNING: Parsing signature failed: "ClassParens()"' in warnings
-        self.assertNotRef('ClassValid`1``0', 'class')
-        assert 'WARNING: Parsing signature failed: "ClassValid`1``0"' in warnings
+        self.assertNotRef('ClassValid`0`1', 'class')
+        assert 'WARNING: Parsing signature failed: "ClassValid`0`1"' in warnings
+        self.assertNotRef('ClassValid`1``1```1', 'class')
+        assert 'WARNING: Parsing signature failed: "ClassValid`1``1```1"' in warnings
 
     def test_class_namespace_nested(self):
         '''Class nested in namespace
@@ -166,8 +179,7 @@ class ReferenceDefinitionTests(SphinxTestCase):
 
             '''
         )
-        # FIXME self.assertRef('ValidClass.MethodNoArgs', 'method')
-
+        self.assertRef('ValidClass.MethodNoArgs', 'method')
         self.assertRef('ValidClass.MethodArg', 'method')
         self.assertRef('ValidClass.MethodArgs', 'method')
         self.assertRef('ValidClass.MethodGeneric', 'method')
