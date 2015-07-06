@@ -80,6 +80,12 @@ class ParseTests(unittest.TestCase):
         self.assertRaises(ValueError, DotNetObjectNested.parse_signature,
                           'Foo.Bar`0`1<T>')
 
+    @unittest.expectedFailure
+    def test_generic_braces(self):
+        '''Unknown generic syntax parsing with braces'''
+        sig = DotNetCallable.parse_signature('Foo.Bar{`1}')
+        self.assertEqual(sig.full_name(), 'Foo.Bar{`1}')
+
     def test_slow_backtrack(self):
         '''Slow query because of excessive backtracking'''
         time_start = time.time()
