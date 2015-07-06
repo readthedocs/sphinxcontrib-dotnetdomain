@@ -86,6 +86,19 @@ class ParseTests(unittest.TestCase):
         sig = DotNetCallable.parse_signature('Foo.Bar{`1}')
         self.assertEqual(sig.full_name(), 'Foo.Bar{`1}')
 
+    @unittest.expectedFailure
+    def test_unparsed_1(self):
+        '''Unparsed operator? syntax
+
+        This syntax includes following tilde notation. This may be return type
+        '''
+        raw = ('Microsoft.CodeAnalysis.Options.Option`1'
+               '.op_Implicit(Microsoft.CodeAnalysis.Options.Option{`0})'
+               '~Microsoft.CodeAnalysis.Options.OptionKey')
+        sig = DotNetCallable.parse_signature(raw)
+        self.assertEqual(sig.full_name(),
+                         'Microsoft.CodeAnalysis.Options.Option`1.op_Implicit')
+
     def test_slow_backtrack(self):
         '''Slow query because of excessive backtracking'''
         time_start = time.time()
