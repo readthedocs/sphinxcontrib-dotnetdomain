@@ -106,10 +106,13 @@ class ReferenceDefinitionTests(SphinxTestCase):
 
                     .. dn:class:: SubNestedClass
 
+                    .. dn:class:: SubNestedClassTwo
+
             '''
         )
         self.assertRef('Namespace.NestedClass', 'class')
         self.assertRef('Namespace.NestedClass.SubNestedClass', 'class')
+        self.assertRef('Namespace.NestedClass.SubNestedClassTwo', 'class')
 
     def test_nested_constructs(self):
         '''Nested constructs besides class'''
@@ -123,20 +126,9 @@ class ReferenceDefinitionTests(SphinxTestCase):
             .. dn:namespace:: ValidNamespace
 
                 .. dn:structure:: NestedStructure
-
-                    Null
-
                 .. dn:interface:: NestedInterface
-
-                    Null
-
                 .. dn:delegate:: NestedDelegate
-
-                    Null
-
                 .. dn:enumeration:: NestedEnumeration
-
-                    Null
 
             .. dn:namespace:: UnNestedNamespace
 
@@ -146,19 +138,19 @@ class ReferenceDefinitionTests(SphinxTestCase):
             .. dn:enumeration:: UnNestedNamespace.UnNestedEnumeration
             '''
         )
-        # FIXME namespace multiple nesting looks to be hosed, fix this test
         self.assertRef('ValidStructure', 'structure')
         self.assertRef('ValidNamespace.NestedStructure', 'structure')
         self.assertRef('UnNestedNamespace.UnNestedStructure', 'structure')
         self.assertRef('ValidInterface', 'interface')
-        # FIXME self.assertRef('ValidNamespace.NestedInterface', 'interface')
+        self.assertRef('ValidNamespace.NestedInterface', 'interface')
         self.assertRef('UnNestedNamespace.UnNestedInterface', 'interface')
         self.assertRef('ValidDelegate', 'delegate')
-        # FIXME self.assertRef('ValidNamespace.NestedDelegate', 'delegate')
+        self.assertRef('ValidNamespace.NestedDelegate', 'delegate')
         self.assertRef('UnNestedNamespace.UnNestedDelegate', 'delegate')
         self.assertRef('ValidEnumeration', 'enumeration')
-        # FIXME self.assertRef('ValidNamespace.NestedEnumeration', 'enumeration')
+        self.assertRef('ValidNamespace.NestedEnumeration', 'enumeration')
         self.assertRef('UnNestedNamespace.UnNestedEnumeration', 'enumeration')
+
 
     # Test callable members
     def test_method_args(self):
