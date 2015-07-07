@@ -228,7 +228,6 @@ class DotNetObject(ObjectDescription):
 class DotNetObjectNested(DotNetObject):
     '''Nestable object'''
 
-    prefix_set = False
     option_spec = {
         'noindex': directives.flag,
         'hidden': directives.flag,
@@ -256,16 +255,38 @@ class DotNetObjectNested(DotNetObject):
         return nodes
 
     def before_content(self):
-        '''Build up prefix with nested elements'''
+        '''Build up prefix history for nested elements
+
+        The following keys are used in :py:attr:`self.env.temp_data`:
+
+            dn:prefixes
+                Stores the prefix history. With each nested element, we add the
+                prefix to a list of prefixes. When we exit that object's nesting
+                level, :py:meth:`after_content` is triggered and the prefix is
+                removed from the end of the list.
+
+            dn:prefix
+                Current prefix. This should reflect the last element in the
+                prefix history
+        '''
         super(DotNetObjectNested, self).before_content()
         if self.names:
             (parent, prefix) = self.names.pop()
-            self.env.temp_data['dn:prefix'] = prefix
-            self.prefix_set = True
+            try:
+                self.env.temp_data['dn:prefixes'].append(prefix)
+            except (AttributeError, KeyError):
+                self.env.temp_data['dn:prefixes'] = [prefix]
+            finally:
+                self.env.temp_data['dn:prefix'] = prefix
 
     def after_content(self):
         super(DotNetObjectNested, self).after_content()
-        if self.prefix_set:
+        try:
+            self.env.temp_data['dn:prefixes'].pop()
+            prefix = self.env.temp_data['dn:prefixes'][-1]
+            self.env.temp_data['dn:prefix'] = prefix
+        except (KeyError, IndexError):
+            self.env.temp_data['dn:prefixes'] = []
             self.env.temp_data['dn:prefix'] = None
 
 
