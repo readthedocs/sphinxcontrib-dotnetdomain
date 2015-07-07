@@ -337,6 +337,11 @@ class DotNetConstructor(DotNetCallable):
     class_object = True
     short_name = 'ctor'
     long_name = 'constructor'
+    signature_pattern = r'''
+        ^(?:(?P<prefix>.+)\.)?
+        (?P<member>\#ctor)
+        (?:\((?P<arguments>[^)]*)\))?$
+    ''' % _re_parts
 
 
 class DotNetProperty(DotNetCallable):
