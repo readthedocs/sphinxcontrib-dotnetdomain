@@ -19,15 +19,10 @@ from docutils.parsers.rst import directives
 
 # Global regex parsing
 _re_parts = {}
-_re_parts['type'] = r'(?:[\`]{1,2}[0-9]+|\<T[0-9]?\>)?'
+_re_parts['type_dimension'] = r'(?:\`\d+)?(?:\`\`\d+)?'
+_re_parts['type_generic'] = r'(?:\<T[0-9]?\>)+'
+_re_parts['type'] = r'(?:%(type_dimension)s|%(type_generic)s)' % _re_parts
 _re_parts['name'] = r'[\w\_\-]+?%(type)s' % _re_parts
-_re_intermediate = (
-    r'''
-        ^(?:(?P<prefix>.+)\.)?
-        (?P<member>%(name)s)
-        (?:\((?P<arguments>[^)]+)\))?$
-    ''' % _re_parts)
-_re_signature = re.compile(_re_intermediate, re.VERBOSE)
 
 
 class DotNetSignature(object):
@@ -50,26 +45,6 @@ class DotNetSignature(object):
         self.member = member
         self.arguments = arguments
 
-    @classmethod
-    def from_string(cls, signature):
-        '''Create signature objects from string definition
-
-        :param signature: construct definition
-        :type signature: string
-        '''
-        match = _re_signature.match(signature)
-        if match:
-            arg_string = match.group('arguments')
-            arguments = None
-            if arg_string:
-                arguments = re.split(r'\,\s+', arg_string)
-            return cls(
-                prefix=match.group('prefix'),
-                member=match.group('member'),
-                arguments=arguments
-            )
-        raise ValueError('Could not parse signature: {0}'.format(signature))
-
     def full_name(self):
         '''Return full name of member'''
         if self.prefix is not None:
@@ -81,6 +56,7 @@ class DotNetSignature(object):
 
         :param prefix: object prefix to compare against
         '''
+        # TODO finish this
         pass
 
     def __str__(self):
@@ -115,6 +91,41 @@ class DotNetObject(ObjectDescription):
     class_object = False
     short_name = None
     long_name = None
+    signature_pattern = None
+
+    @classmethod
+    def parse_signature(cls, signature):
+        '''Parse signature declartion string
+
+        Uses :py:attr:`signature_pattern` to parse out pieces of constraint
+        signatures. Pattern should provide the following named groups:
+
+            prefix
+                Object prefix, such as a namespace
+
+            member
+                Object member name
+
+            arguments
+                Declaration arguments, if this is a callable constraint
+
+        :param signature: construct signature
+        :type signature: string
+        '''
+        assert cls.signature_pattern is not None
+        pattern = re.compile(cls.signature_pattern, re.VERBOSE)
+        match = pattern.match(signature)
+        if match:
+            groups = match.groupdict()
+            arguments = None
+            if 'arguments' in groups and groups['arguments'] is not None:
+                arguments = re.split(r'\,\s+', groups['arguments'])
+            return DotNetSignature(
+                prefix=groups.get('prefix', None),
+                member=groups.get('member', None),
+                arguments=arguments
+            )
+        raise ValueError('Could not parse signature: {0}'.format(signature))
 
     def handle_signature(self, sig_input, signode):
         '''Parses out pieces from construct signatures
@@ -133,7 +144,7 @@ class DotNetObject(ObjectDescription):
             nesting/etc
         '''
         try:
-            sig = DotNetSignature.from_string(sig_input.strip())
+            sig = self.parse_signature(sig_input.strip())
         except ValueError:
             self.env.warn(self.env.docname,
                           'Parsing signature failed: "{}"'.format(sig_input),
@@ -223,6 +234,11 @@ class DotNetObjectNested(DotNetObject):
         'hidden': directives.flag,
     }
 
+    signature_pattern = r'''
+        ^(?:(?P<prefix>.+)\.)?
+        (?P<member>%(name)s)$
+    ''' % _re_parts
+
     def run(self):
         '''If element is considered hidden, drop the desc_signature node
 
@@ -267,6 +283,11 @@ class DotNetCallable(DotNetObject):
               names=('rtype',)),
     ]
 
+    signature_pattern = r'''
+        ^(?:(?P<prefix>.+)\.)?
+        (?P<member>%(name)s)
+        (?:\((?P<arguments>[^)]*)\))?$
+    ''' % _re_parts
 
 # Types
 class DotNetNamespace(DotNetObjectNested):
