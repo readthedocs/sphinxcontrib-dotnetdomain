@@ -24,12 +24,12 @@ class XRefTests(SphinxTestCase):
             :dn:del:`ValidDelegate`
             :dn:enum:`ValidEnumeration`
             ''')
-        self.assertXRef('ValidNamespace', obj_type='ns')
-        self.assertXRef('ValidClass', obj_type='cls')
-        self.assertXRef('ValidStructure', obj_type='struct')
-        self.assertXRef('ValidInterface', obj_type='iface')
-        self.assertXRef('ValidDelegate', obj_type='del')
-        self.assertXRef('ValidEnumeration', obj_type='enum')
+        self.assertXRef('ValidNamespace', obj_type='namespace')
+        self.assertXRef('ValidClass', obj_type='class')
+        self.assertXRef('ValidStructure', obj_type='structure')
+        self.assertXRef('ValidInterface', obj_type='interface')
+        self.assertXRef('ValidDelegate', obj_type='delegate')
+        self.assertXRef('ValidEnumeration', obj_type='enumeration')
 
     def test_nested_xref(self):
         '''Cross references nested one level deep in a namespace'''
@@ -52,15 +52,15 @@ class XRefTests(SphinxTestCase):
         self.assertRef('ValidNamespace', 'namespace')
 
         self.assertXRef('NestedClass', prefix='ValidNamespace',
-                        obj_type='cls')
+                        obj_type='class')
         self.assertXRef('NestedStructure', prefix='ValidNamespace',
-                        obj_type='struct')
+                        obj_type='structure')
         self.assertXRef('NestedInterface', prefix='ValidNamespace',
-                        obj_type='iface')
+                        obj_type='interface')
         self.assertXRef('NestedDelegate', prefix='ValidNamespace',
-                        obj_type='del')
+                        obj_type='delegate')
         self.assertXRef('NestedEnumeration', prefix='ValidNamespace',
-                        obj_type='enum')
+                        obj_type='enumeration')
 
     def test_nested_toplevel_xref(self):
         '''Cross references nested one level deep in a namespace'''
@@ -82,11 +82,11 @@ class XRefTests(SphinxTestCase):
             ''')
         self.assertRef('ValidNamespace', 'namespace')
 
-        self.assertXRef('ValidNamespace.NestedClass', obj_type='cls')
-        self.assertXRef('ValidNamespace.NestedStructure', obj_type='struct')
-        self.assertXRef('ValidNamespace.NestedInterface', obj_type='iface')
-        self.assertXRef('ValidNamespace.NestedDelegate', obj_type='del')
-        self.assertXRef('ValidNamespace.NestedEnumeration', obj_type='enum')
+        self.assertXRef('ValidNamespace.NestedClass', obj_type='class')
+        self.assertXRef('ValidNamespace.NestedStructure', obj_type='structure')
+        self.assertXRef('ValidNamespace.NestedInterface', obj_type='interface')
+        self.assertXRef('ValidNamespace.NestedDelegate', obj_type='delegate')
+        self.assertXRef('ValidNamespace.NestedEnumeration', obj_type='enumeration')
 
     def test_class_member_xref(self):
         '''Class member cross references'''
@@ -107,15 +107,15 @@ class XRefTests(SphinxTestCase):
                 .. dn:operator:: NestedOperator
             ''')
         self.assertXRef('NestedMethod', prefix='ValidClass',
-                        obj_type='meth')
+                        obj_type='method')
         self.assertXRef('NestedProperty', prefix='ValidClass',
-                        obj_type='prop')
+                        obj_type='property')
         self.assertXRef('NestedField', prefix='ValidClass',
                         obj_type='field')
         self.assertXRef('NestedEvent', prefix='ValidClass',
                         obj_type='event')
         self.assertXRef('NestedOperator', prefix='ValidClass',
-                        obj_type='op')
+                        obj_type='operator')
 
     def test_class_member_toplevel_xref(self):
         '''Class member cross references'''
@@ -135,11 +135,11 @@ class XRefTests(SphinxTestCase):
             * :dn:event:`ValidClass.NestedEvent`
             * :dn:op:`ValidClass.NestedOperator`
             ''')
-        self.assertXRef('ValidClass.NestedMethod', obj_type='meth')
-        self.assertXRef('ValidClass.NestedProperty', obj_type='prop')
+        self.assertXRef('ValidClass.NestedMethod', obj_type='method')
+        self.assertXRef('ValidClass.NestedProperty', obj_type='property')
         self.assertXRef('ValidClass.NestedField', obj_type='field')
         self.assertXRef('ValidClass.NestedEvent', obj_type='event')
-        self.assertXRef('ValidClass.NestedOperator', obj_type='op')
+        self.assertXRef('ValidClass.NestedOperator', obj_type='operator')
 
     def test_xref_collision_methods(self):
         '''Cross reference collision on class methods
@@ -156,16 +156,13 @@ class XRefTests(SphinxTestCase):
                 .. dn:method:: NestedMethod(arg2)
             ''')
         self.assertXRef('NestedMethod', prefix='ValidClass',
-                        obj_type='meth')
+                        obj_type='method')
 
-    @unittest.expectedFailure
     def test_xref_collision_type_difference(self):
         '''Cross reference but with type differences
 
         On differing types, colliding names should both be addressable.
         '''
-        # FIXME is this currently possible? Can we make this pass, or does the
-        # type not affect the list of objects currently?
         self.app._mock_build(
             '''
             .. dn:class:: ValidClass
@@ -178,12 +175,9 @@ class XRefTests(SphinxTestCase):
                 .. dn:field:: Nested()
                 .. dn:property:: Nested()
             ''')
-        self.assertXRef('NestedMethod', prefix='ValidClass',
-                        obj_type='meth')
-        self.assertXRef('NestedMethod', prefix='ValidClass',
-                        obj_type='field')
-        self.assertXRef('NestedMethod', prefix='ValidClass',
-                        obj_type='prop')
+        self.assertXRef('Nested', prefix='ValidClass', obj_type='method')
+        self.assertXRef('Nested', prefix='ValidClass', obj_type='field')
+        self.assertXRef('Nested', prefix='ValidClass', obj_type='property')
 
     def test_xref_collision_multiple_namespaces(self):
         '''Cross reference with same name between multiple namespaces'''
@@ -204,13 +198,13 @@ class XRefTests(SphinxTestCase):
                 .. dn:method:: Nested()
             ''')
         self.assertXRef('Nested', prefix='ValidClassOne',
-                        obj_type='meth')
+                        obj_type='method')
         self.assertXRef('Nested', prefix='ValidClassTwo',
-                        obj_type='meth')
+                        obj_type='method')
         self.assertNoXRef('ValidClassTwo.Nested', prefix='ValidClassOne',
-                          obj_type='meth')
+                          obj_type='method')
         self.assertNoXRef('ValidClassOne.Nested', prefix='ValidClassTwo',
-                          obj_type='meth')
+                          obj_type='method')
 
     def test_xref_subnested(self):
         '''Cross reference nested multiple levels'''
@@ -228,9 +222,9 @@ class XRefTests(SphinxTestCase):
 
                     .. dn:method:: Level3()
             ''')
-        self.assertXRef('Level1.Level2.Level3', obj_type='meth')
-        self.assertXRef('Level2.Level3', prefix='Level1', obj_type='meth')
-        self.assertXRef('Level3', prefix='Level1.Level2', obj_type='meth')
+        self.assertXRef('Level1.Level2.Level3', obj_type='method')
+        self.assertXRef('Level2.Level3', prefix='Level1', obj_type='method')
+        self.assertXRef('Level3', prefix='Level1.Level2', obj_type='method')
 
     def test_xref_subnested_inverted(self):
         '''Cross reference nested multiple levels referencing backwards'''
@@ -250,10 +244,10 @@ class XRefTests(SphinxTestCase):
 
                         * :dn:ns:`Level1`
             ''')
-        self.assertXRef('Level1', obj_type='ns', ret_name='Level1')
-        self.assertXRef('Level1', prefix='Level1', obj_type='ns',
+        self.assertXRef('Level1', obj_type='namespace', ret_name='Level1')
+        self.assertXRef('Level1', prefix='Level1', obj_type='namespace',
                         ret_name='Level1')
-        self.assertXRef('Level1', prefix='Level1.Level2', obj_type='ns',
+        self.assertXRef('Level1', prefix='Level1.Level2', obj_type='namespace',
                         ret_name='Level1')
 
     def test_xref_nested_sibling(self):
@@ -280,17 +274,17 @@ class XRefTests(SphinxTestCase):
 
             .. dn:namespace:: Level1Sibling
             ''')
-        self.assertXRef('Level1Sibling', prefix='Level1', obj_type='ns',
+        self.assertXRef('Level1Sibling', prefix='Level1', obj_type='namespace',
                         ret_name='Level1Sibling')
         self.assertXRef('Level1.Level2Sibling', prefix='Level1.Level2',
-                        obj_type='cls', ret_name='Level1.Level2Sibling')
+                        obj_type='class', ret_name='Level1.Level2Sibling')
         self.assertNoXRef('Level2Sibling', prefix='Level1.Level2',
-                          obj_type='cls', ret_name='Level2Sibling')
+                          obj_type='class', ret_name='Level2Sibling')
         # This works because methods don't propagate new prefixes to ref_context
         self.assertXRef('Level3Sibling', prefix='Level1.Level2',
-                        obj_type='meth', ret_name='Level1.Level2.Level3Sibling')
+                        obj_type='method', ret_name='Level1.Level2.Level3Sibling')
         self.assertXRef('Level1.Level2.Level3Sibling', prefix='Level1.Level2',
-                        obj_type='meth', ret_name='Level1.Level2.Level3Sibling')
+                        obj_type='method', ret_name='Level1.Level2.Level3Sibling')
 
     def test_xref_generics(self):
         '''Cross reference with same name between multiple namespaces'''
@@ -313,8 +307,8 @@ class XRefTests(SphinxTestCase):
             * :dn:cls:`GoofyClass<T><T>`
             * :dn:cls:`GoofyClass<T><T><T>`
             ''')
-        self.assertXRef('GenericClass<T>', obj_type='cls')
-        self.assertXRef('GenericClass<T><T>', obj_type='cls')
-        self.assertXRef('GoofyClass<T>', obj_type='cls')
-        self.assertXRef('GoofyClass<T><T>', obj_type='cls')
-        self.assertXRef('GoofyClass<T><T><T>', obj_type='cls')
+        self.assertXRef('GenericClass<T>', obj_type='class')
+        self.assertXRef('GenericClass<T><T>', obj_type='class')
+        self.assertXRef('GoofyClass<T>', obj_type='class')
+        self.assertXRef('GoofyClass<T><T>', obj_type='class')
+        self.assertXRef('GoofyClass<T><T><T>', obj_type='class')

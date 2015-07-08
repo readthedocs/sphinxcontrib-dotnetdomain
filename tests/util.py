@@ -98,25 +98,27 @@ class SphinxTestCase(unittest.TestCase):
                                    'example', '_build'))
         self.patch.stop()
 
-    def assertRef(self, refname, type_=None, docname=None, domain='dn'):
+    def assertRef(self, obj_name, obj_type=None, doc_name='index', domain='dn'):
         '''Assert reference is found and matches criteria
 
-        :param refname: Reference name to lookup
-        :param type_: Reference type to match
-        :param docname: Reference docname
+        :param obj_name: Reference name to lookup
+        :param obj_type: Reference type to match
+        :param doc_name: Reference docname
         :param domain: Domain moniker to use on lookup (default: dn)
         '''
+        # Get class short name for reference first
+        self.assertIn(obj_type, self.app.env.domains['dn'].directives,
+                      'Missing reference type: %s' % obj_type)
+        obj_ref_type = self.app.env.domains['dn'].directives[obj_type].short_name
         try:
-            ref = self.app.env.domaindata[domain]['objects'][refname]
-            (ref_docname, ref_type) = ref
-            if type_ is not None and ref_type != type_:
-                raise AssertionError('Reference type mismatch: {0} != {1}'
-                                     .format(type_, ref_type))
-            if docname is not None and ref_docname != docname:
-                raise AssertionError('Reference docname mismatch: {0} != {1}'
-                                     .format(docname, ref_docname))
+            objects = self.app.env.domaindata[domain]['objects']
+            (obj_doc_name, _) = objects[obj_ref_type, obj_name]
+            self.assertEqual(
+                doc_name, obj_doc_name,
+                'Reference docname mismatch: expected {0}, actual {1}'
+                .format(doc_name, obj_doc_name))
         except KeyError:
-            raise AssertionError('Reference not found: {0}'.format(refname))
+            raise AssertionError('Reference not found: {0}'.format(obj_name))
 
     def assertNotRef(self, *args, **kwargs):
         '''Inverse of :py:meth:`assertRef`'''
@@ -137,14 +139,18 @@ class SphinxTestCase(unittest.TestCase):
 
         :param name: Reference name
         :param prefix: Reference prefix
-        :param obj_type: Reference type
+        :param obj_type: Object type name
         :param doc: Document name as part of the reference return
         :param ret_name: Name of object that is found during search, this
                          defaults to ``<prefix>.<name>``, but may differ if
                          doing a reverse search
         '''
+        # Get class short name for reference first
+        self.assertIn(obj_type, self.app.env.domains['dn'].directives,
+                      'Missing reference type: %s' % obj_type)
+        obj_ref_type = self.app.env.domains['dn'].directives[obj_type].short_name
         # Assert called correctly and return exists
-        args = (self.app.env, prefix, name, obj_type, 0)
+        args = (self.app.env, prefix, name, obj_ref_type, 0)
         self.mocked_find_obj.assert_has_calls(calls=[(args, {})])
         found = None
         for (mock_call, mock_return) in self.mocked_find_obj.call_return_list:
@@ -158,16 +164,13 @@ class SphinxTestCase(unittest.TestCase):
             ret_name = name
             if prefix is not None:
                 ret_name = '.'.join([prefix, name])
-        (found_name, found_meta) = found
+        ((_, found_name), found_meta) = found
         self.assertIsNotNone(found_name,
                              'XRef {0} not found'.format(ret_name))
         (found_doc, found_type) = found_meta
         self.assertEqual(found_name, ret_name)
         self.assertEqual(found_doc, doc)
-        self.assertTrue(any(cls.short_name == obj_type
-                            for (long_name, cls)
-                            in self.app.env.domains['dn'].directives.items()
-                            if long_name == found_type))
+        self.assertEqual(found_type, obj_type)
 
     def assertNoXRef(self, *args, **kwargs):
         '''Inverse of :py:meth:`assertXRef`'''
