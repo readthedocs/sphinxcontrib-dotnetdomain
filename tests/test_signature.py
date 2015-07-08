@@ -4,7 +4,7 @@ import unittest
 import time
 
 from sphinxcontrib.dotnetdomain import (DotNetCallable, DotNetObjectNested,
-                                        DotNetConstructor)
+                                        DotNetConstructor, DotNetOperator)
 
 
 class ParseTests(unittest.TestCase):
@@ -99,18 +99,47 @@ class ParseTests(unittest.TestCase):
         sig = DotNetCallable.parse_signature('Foo.Bar{`1}')
         self.assertEqual(sig.full_name(), 'Foo.Bar{`1}')
 
-    @unittest.expectedFailure
-    def test_unparsed_1(self):
-        '''Unparsed operator? syntax
-
-        This syntax includes following tilde notation. This may be return type
-        '''
-        raw = ('Microsoft.CodeAnalysis.Options.Option`1'
-               '.op_Implicit(Microsoft.CodeAnalysis.Options.Option{`0})'
-               '~Microsoft.CodeAnalysis.Options.OptionKey')
-        sig = DotNetCallable.parse_signature(raw)
+    def test_operator(self):
+        '''Operator signature parsing'''
+        # Implicit operator
+        sig = DotNetOperator.parse_signature('Foo.implicit operator Bar(arg)')
+        self.assertEqual(sig.prefix, 'Foo')
+        self.assertEqual(sig.member, 'implicit operator Bar')
+        raw = ('Microsoft.CodeAnalysis.Options.Option<T>.implicit operator '
+               'Microsoft.CodeAnalysis.Options.OptionKey'
+               '(Microsoft.CodeAnalysis.Options.Option<T>)')
+        sig = DotNetOperator.parse_signature(raw)
+        self.assertEqual(sig.prefix,
+                         'Microsoft.CodeAnalysis.Options.Option<T>')
+        self.assertEqual(sig.member,
+                         ('implicit operator '
+                          'Microsoft.CodeAnalysis.Options.OptionKey'))
         self.assertEqual(sig.full_name(),
-                         'Microsoft.CodeAnalysis.Options.Option`1.op_Implicit')
+                         ('Microsoft.CodeAnalysis.Options.Option<T>'
+                          '.implicit operator '
+                          'Microsoft.CodeAnalysis.Options.OptionKey'))
+        # Other operators
+        sig = DotNetOperator.parse_signature('Foo.operator <=(arg)')
+        self.assertEqual(sig.member, 'operator <=')
+        sig = DotNetOperator.parse_signature('Foo.operator true(arg)')
+        self.assertEqual(sig.member, 'operator true')
+        sig = DotNetOperator.parse_signature('Foo.operator false(arg)')
+        self.assertEqual(sig.member, 'operator false')
+        self.assertRaises(ValueError, DotNetOperator.parse_signature,
+                          'Foo.operator foo(args)')
+        self.assertRaises(ValueError, DotNetOperator.parse_signature,
+                          'Foo.operator foo==(args)')
+        self.assertRaises(ValueError, DotNetOperator.parse_signature,
+                          'Foo.operator ==foo(args)')
+        self.assertRaises(ValueError, DotNetOperator.parse_signature,
+                          'Foo.operator <==>(args)')
+
+        raw = ('Microsoft.CodeAnalysis.ProjectId.operator '
+               '==(Microsoft.CodeAnalysis.ProjectId, '
+               'Microsoft.CodeAnalysis.ProjectId)')
+        sig = DotNetOperator.parse_signature(raw)
+        self.assertEqual(sig.full_name(),
+                         'Microsoft.CodeAnalysis.ProjectId.operator ==')
 
     def test_slow_backtrack(self):
         '''Slow query because of excessive backtracking'''
