@@ -9,7 +9,7 @@ from sphinx import addnodes
 from sphinx.domains import Domain, ObjType, Index
 from sphinx.locale import l_, _
 from sphinx.directives import ObjectDescription
-from sphinx.roles import XRefRole
+from sphinx.roles import AnyXRefRole
 from sphinx.domains.python import _pseudo_parse_arglist
 from sphinx.util.nodes import make_refnode
 from sphinx.util.docfields import Field, TypedField
@@ -151,7 +151,7 @@ class DotNetObject(ObjectDescription):
                           self.lineno)
             raise
 
-        prefix = self.env.temp_data.get('dn:prefix', None)
+        prefix = self.env.ref_context.get('dn:prefix', None)
 
         if prefix is not None:
             sig.prefix = prefix
@@ -183,7 +183,7 @@ class DotNetObject(ObjectDescription):
     def add_target_and_index(self, name_obj, sig, signode):
         # TODO wtf does this do?
         objectname = self.options.get(
-            'object', self.env.temp_data.get('dn:object'))
+            'object', self.env.ref_context.get('dn:object'))
         fullname = name_obj[0]
         if fullname not in self.state.document.ids:
             signode['names'].append(fullname)
@@ -257,7 +257,7 @@ class DotNetObjectNested(DotNetObject):
     def before_content(self):
         '''Build up prefix history for nested elements
 
-        The following keys are used in :py:attr:`self.env.temp_data`:
+        The following keys are used in :py:attr:`self.env.ref_context`:
 
             dn:prefixes
                 Stores the prefix history. With each nested element, we add the
@@ -273,21 +273,21 @@ class DotNetObjectNested(DotNetObject):
         if self.names:
             (parent, prefix) = self.names.pop()
             try:
-                self.env.temp_data['dn:prefixes'].append(prefix)
+                self.env.ref_context['dn:prefixes'].append(prefix)
             except (AttributeError, KeyError):
-                self.env.temp_data['dn:prefixes'] = [prefix]
+                self.env.ref_context['dn:prefixes'] = [prefix]
             finally:
-                self.env.temp_data['dn:prefix'] = prefix
+                self.env.ref_context['dn:prefix'] = prefix
 
     def after_content(self):
         super(DotNetObjectNested, self).after_content()
         try:
-            self.env.temp_data['dn:prefixes'].pop()
-            prefix = self.env.temp_data['dn:prefixes'][-1]
-            self.env.temp_data['dn:prefix'] = prefix
+            self.env.ref_context['dn:prefixes'].pop()
+            prefix = self.env.ref_context['dn:prefixes'][-1]
+            self.env.ref_context['dn:prefix'] = prefix
         except (KeyError, IndexError):
-            self.env.temp_data['dn:prefixes'] = []
-            self.env.temp_data['dn:prefix'] = None
+            self.env.ref_context['dn:prefixes'] = []
+            self.env.ref_context['dn:prefix'] = None
 
 
 class DotNetCallable(DotNetObject):
@@ -390,23 +390,31 @@ class DotNetOperator(DotNetCallable):
 
 
 # Cross referencing
-class DotNetXRefRole(XRefRole):
+class DotNetXRefRole(AnyXRefRole):
+    '''XRef role to handle special .NET cases'''
+
+    # So, this is silly, because FooBar<T><T> links to `T><T`, and so on.
+    generic_pattern = re.compile(r'^T(?:\>\<T)*$')
 
     def process_link(self, env, refnode, has_explicit_title, title, target):
-        refnode['dn:object'] = env.temp_data.get('dn:object')
-        refnode['dn:prefix'] = env.temp_data.get('dn:prefix')
-        if not has_explicit_title:
-            title = title.lstrip('.')
-            # TODO tilde?
-            target = target.lstrip('~')
-            if title[0:1] == '~':
-                title = title[1:]
-                dot = title.rfind('.')
-                if dot != -1:
-                    title = title[dot + 1:]
-        if target[0:1] == '.':
-            target = target[1:]
-            refnode['refspecific'] = True
+        '''This handles some special cases for reference links in .NET
+
+        First, the standard Sphinx reference syntax of ``:ref:`Title<Link>```,
+        where a reference to ``Link`` is created with title ``Title``, causes
+        problems for the generic .NET syntax of ``:dn:cls:`FooBar<T>```. So, here
+        we assume that ``<T>`` was the generic declaration, and fix the
+        reference.
+
+        This also uses :py:cls:`AnyXRefRole` to add `ref_context` onto the
+        refnode. Add data there that you need it on refnodes.
+        '''
+        super(DotNetXRefRole, self).process_link(env, refnode,
+                                                 has_explicit_title, title,
+                                                 target)
+        # Fix generic references that are accidentally titled references
+        if self.generic_pattern.match(target):
+            target = title = '{title}<{target}>'.format(title=title,
+                                                        target=target)
         return title, target
 
 
@@ -536,7 +544,7 @@ class DotNetDomain(Domain):
 
         return newname, objects.get(newname)
 
-    def resolve_xref(self, env, fromdocname, builder, obj_type, target, node,
+    def resolve_xref(self, env, doc, builder, obj_type, target, node,
                      contnode):
         prefix = node.get('dn:prefix')
         searchorder = node.hasattr('refspecific') and 1 or 0
@@ -545,15 +553,11 @@ class DotNetDomain(Domain):
 
         if not obj:
             return None
-        # TODO required to swap out dollar sigil?
-        return make_refnode(builder, fromdocname, obj[0],
-                            name.replace('$', '_S_'), contnode, name)
+        return make_refnode(builder, doc, obj[0], name, contnode, name)
 
     def get_objects(self):
-        # TODO wtf does this do?
-        for refname, (docname, type) in self.data['objects'].iteritems():
-            yield refname, refname, type, docname, \
-                refname.replace('$', '_S_'), 1
+        for obj_name, (obj_doc, obj_type) in self.data['objects'].iteritems():
+            yield obj_name, obj_name, obj_type, obj_doc, obj_name, 1
 
 
 def setup(app):

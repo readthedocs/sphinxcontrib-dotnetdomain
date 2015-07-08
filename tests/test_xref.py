@@ -298,15 +298,23 @@ class XRefTests(SphinxTestCase):
             '''
             .. dn:class:: GenericClass<T>
             .. dn:class:: GenericClass<T><T>
+            .. dn:class:: GoofyClass<T>
+            .. dn:class:: GoofyClass<T><T>
+            .. dn:class:: GoofyClass<T><T><T>
 
             * :dn:cls:`GenericClass\<T\>`
             * :dn:cls:`GenericClass\<T\>\<T\>`
 
             This is special Sphinx reference syntax, meaning reference to type
-            ``T``, with text ``GenericClass``:
+            ``T``, with text ``GoofyClass``. We'll assume this is a mistake and
+            fix the reference, because escaping the generic is annoying:
 
-            * :dn:cls:`GenericClass<T>`
+            * :dn:cls:`GoofyClass<T>`
+            * :dn:cls:`GoofyClass<T><T>`
+            * :dn:cls:`GoofyClass<T><T><T>`
             ''')
         self.assertXRef('GenericClass<T>', obj_type='cls')
         self.assertXRef('GenericClass<T><T>', obj_type='cls')
-        self.assertNoXRef('GenericClass', obj_type='cls')
+        self.assertXRef('GoofyClass<T>', obj_type='cls')
+        self.assertXRef('GoofyClass<T><T>', obj_type='cls')
+        self.assertXRef('GoofyClass<T><T><T>', obj_type='cls')
