@@ -232,7 +232,6 @@ class XRefTests(SphinxTestCase):
         self.assertXRef('Level2.Level3', prefix='Level1', obj_type='meth')
         self.assertXRef('Level3', prefix='Level1.Level2', obj_type='meth')
 
-    @unittest.expectedFailure
     def test_xref_subnested_inverted(self):
         '''Cross reference nested multiple levels referencing backwards'''
         self.app._mock_build(
@@ -256,12 +255,7 @@ class XRefTests(SphinxTestCase):
                         ret_name='Level1')
         self.assertXRef('Level1', prefix='Level1.Level2', obj_type='ns',
                         ret_name='Level1')
-        # FIXME non-nestable objects should propagate the prefix they were
-        # established with instead of setting no prefix
-        self.assertXRef('Level1', prefix='Level1.Level2.Level3', obj_type='ns',
-                        ret_name='Level1')
 
-    @unittest.expectedFailure
     def test_xref_nested_sibling(self):
         '''Cross reference nested multiple levels referencing backwards'''
         self.app._mock_build(
@@ -273,10 +267,12 @@ class XRefTests(SphinxTestCase):
                 .. dn:class:: Level2
 
                     * :dn:cls:`Level2Sibling`
+                    * :dn:cls:`Level1.Level2Sibling`
 
                     .. dn:method:: Level3()
 
                         * :dn:meth:`Level3Sibling`
+                        * :dn:meth:`Level1.Level2.Level3Sibling`
 
                     .. dn:method:: Level3Sibling
 
@@ -286,11 +282,15 @@ class XRefTests(SphinxTestCase):
             ''')
         self.assertXRef('Level1Sibling', prefix='Level1', obj_type='ns',
                         ret_name='Level1Sibling')
-        self.assertXRef('Level2Sibling', prefix='Level1.Level2', obj_type='cls',
-                        ret_name='Level2Sibling')
-        # FIXME same issue as above
-        self.assertXRef('Level3Sibling', prefix='Level1.Level2.Level3',
-                        obj_type='meth', ret_name='Level3Sibling')
+        self.assertXRef('Level1.Level2Sibling', prefix='Level1.Level2',
+                        obj_type='cls', ret_name='Level1.Level2Sibling')
+        self.assertNoXRef('Level2Sibling', prefix='Level1.Level2',
+                          obj_type='cls', ret_name='Level2Sibling')
+        # This works because methods don't propagate new prefixes to ref_context
+        self.assertXRef('Level3Sibling', prefix='Level1.Level2',
+                        obj_type='meth', ret_name='Level1.Level2.Level3Sibling')
+        self.assertXRef('Level1.Level2.Level3Sibling', prefix='Level1.Level2',
+                        obj_type='meth', ret_name='Level1.Level2.Level3Sibling')
 
     def test_xref_generics(self):
         '''Cross reference with same name between multiple namespaces'''
