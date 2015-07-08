@@ -234,3 +234,22 @@ class ReferenceDefinitionTests(SphinxTestCase):
         self.assertRef('ValidNamespace.NestedClass.NestedClassField', 'field')
         self.assertRef('ValidNamespace.NestedClass.NestedClassEvent', 'event')
         self.assertRef('ValidNamespace.NestedClass.NestedClassOperator', 'operator')
+
+    def test_operator(self):
+        '''Operator references'''
+        self.app._mock_build(
+            '''
+            .. dn:class:: ValidClass
+
+                .. dn:operator:: AnInvalidOperatorWeParseAnyways
+                .. dn:operator:: operator ==(arg1, arg2)
+                .. dn:operator:: operator <=(arg1, arg2)
+                .. dn:operator:: operator true(arg1, arg2)
+                .. dn:operator:: implicit operator Some.Other.Type(arg1)
+            '''
+        )
+        self.assertRef('ValidClass.AnInvalidOperatorWeParseAnyways', 'operator')
+        self.assertRef('ValidClass.operator ==', 'operator')
+        self.assertRef('ValidClass.operator <=', 'operator')
+        self.assertRef('ValidClass.operator true', 'operator')
+        self.assertRef('ValidClass.implicit operator Some.Other.Type', 'operator')
