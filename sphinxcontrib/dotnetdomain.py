@@ -64,6 +64,7 @@ class DotNetSignature(object):
 
 
 class DotNetObject(ObjectDescription):
+
     '''Description of a .NET construct object.
 
     Class variables
@@ -230,6 +231,7 @@ class DotNetObject(ObjectDescription):
 
 
 class DotNetObjectNested(DotNetObject):
+
     '''Nestable object'''
 
     option_spec = {
@@ -315,6 +317,8 @@ class DotNetCallable(DotNetObject):
     ''' % _re_parts
 
 # Types
+
+
 class DotNetNamespace(DotNetObjectNested):
     short_name = 'ns'
     long_name = 'namespace'
@@ -388,6 +392,7 @@ class DotNetEvent(DotNetCallable):
 
 
 class DotNetOperator(DotNetCallable):
+
     '''Operator object with special parsing
 
     Parses out signatures that match several cases:
@@ -421,6 +426,7 @@ class DotNetOperator(DotNetCallable):
 
 # Cross referencing
 class DotNetXRefRole(AnyXRefRole):
+
     '''XRef role to handle special .NET cases'''
 
     # So, this is silly, because FooBar<T><T> links to `T><T`, and so on.
@@ -466,6 +472,7 @@ _domain_types = [
 
 
 class DotNetIndex(Index):
+
     """
     Index subclass to provide the .NET module index.
     """
@@ -532,7 +539,7 @@ class DotNetDomain(Domain):
 
     def clear_doc(self, doc_name):
         for (obj_type, obj_name), (obj_doc_name, _) in self.data['objects'].items():
-            if doc_name  == obj_doc_name:
+            if doc_name == obj_doc_name:
                 del self.data['objects'][obj_type, obj_name]
 
     def find_obj(self, env, prefix, name, obj_type, searchorder=0):
