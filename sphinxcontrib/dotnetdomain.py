@@ -7,7 +7,7 @@ import re
 
 from sphinx import addnodes
 from sphinx.domains import Domain, ObjType, Index
-from sphinx.locale import l_, _
+from sphinx.locale import l_
 from sphinx.directives import ObjectDescription
 from sphinx.roles import AnyXRefRole
 from sphinx.domains.python import _pseudo_parse_arglist
@@ -181,44 +181,48 @@ class DotNetObject(ObjectDescription):
         return sig.full_name(), sig.prefix
 
     def add_target_and_index(self, name_obj, sig, signode):
-        # TODO wtf does this do?
-        objectname = self.options.get(
-            'object', self.env.ref_context.get('dn:object'))
-        fullname = name_obj[0]
-        if fullname not in self.state.document.ids:
-            signode['names'].append(fullname)
-            signode['ids'].append(fullname.replace('$', '_S_'))
+        '''Add objects to the domain list of objects
+
+        This uses the directive short name along with the full object name to
+        create objects and nodes that are type and name unique.
+        '''
+        obj_name = self.options.get('object',
+                                    self.env.ref_context.get('dn:object'))
+        full_name = name_obj[0]
+        target_name = '{0}-{1}'.format(self.short_name, full_name)
+        if target_name not in self.state.document.ids:
+            signode['names'].append(target_name)
+            signode['ids'].append(target_name)
             signode['first'] = not self.names
             self.state.document.note_explicit_target(signode)
-            objects = self.env.domaindata['dn']['objects']
-            if fullname in objects:
-                self.state_machine.reporter.warning(
-                    'duplicate object description of %s, ' % fullname +
-                    'other instance in ' +
-                    self.env.doc2path(objects[fullname][0]),
-                    line=self.lineno)
-            objects[fullname] = self.env.docname, self.objtype
 
-        indextext = self.get_index_text(objectname, name_obj)
-        if indextext:
-            self.indexnode['entries'].append(('single', indextext,
-                                              fullname.replace('$', '_S_'),
+            # Update domain objects
+            objects = self.env.domaindata['dn']['objects']
+            try:
+                found_obj = objects[self.short_name, full_name]
+                (found_doc, _) = found_obj
+                self.state_machine.reporter.warning(
+                    ('duplicate object definition of {obj_type} {obj_name}'
+                     'other instance in {path}'
+                     .format(obj_type=self.short_name, obj_name=full_name,
+                             path=self.env.doc2path(found_doc))),
+                    line=self.lineno)
+            except KeyError:
+                pass
+            finally:
+                objects[self.short_name, full_name] = (self.env.docname,
+                                                       self.objtype)
+
+        index_text = self.get_index_text(obj_name, name_obj)
+        if index_text:
+            self.indexnode['entries'].append(('single', index_text, full_name,
                                               ''))
 
-    def get_index_text(self, objectname, name_obj):
-        # TODO this should inspect classes, not this objtype nonsense
-        name, obj = name_obj
-        if self.objtype == 'function':
-            if not obj:
-                return _('%s() (built-in function)') % name
-            return _('%s() (%s method)') % (name, obj)
-        elif self.objtype == 'namespace':
-            return _('%s (package)') % name
-        elif self.objtype == 'data':
-            return _('%s (global variable or constant)') % name
-        elif self.objtype == 'attribute':
-            return _('%s (%s attribute)') % (name, obj)
-        return ''
+    def get_index_text(self, obj_name, name_obj):
+        '''Produce index text by directive attributes'''
+        (name, _) = name_obj
+        return '{obj_name} ({name} {obj_type})'.format(
+            obj_name=obj_name, name=name, obj_type=self.long_name)
 
     @classmethod
     def get_type(cls):
@@ -467,44 +471,40 @@ class DotNetIndex(Index):
     """
 
     name = 'modindex'
-    localname = l_('.Net Module Index')
-    shortname = l_('.Net modules')
+    localname = l_('.NET Module Index')
+    shortname = l_('.NET modules')
 
-    def generate(self, docnames=None):
+    def generate(self, doc_names=None):
         content = {}
-        # list of all modules, sorted by module name
-        modules = sorted(self.domain.data['objects'].iteritems(),
-                         key=lambda x: x[0].lower())
-        for modname, (docname, _type) in modules:
-            if docnames and docname not in docnames:
+        objects = sorted(self.domain.data['objects'].iteritems(),
+                         key=lambda x: x[1].lower())
+        for (obj_type, obj_name), (obj_doc_name, _) in objects:
+            if doc_names and obj_doc_name not in doc_names:
+                continue
+            if obj_type != 'namespace':
                 continue
 
-            if _type != 'namespace':
-                continue
-
-            letter = modname.split('.')[-1][0]
-
+            letter = obj_name.split('.')[-1][0]
             entries = content.setdefault(letter.lower(), [])
 
             subtype = 0
             qualifier = ''
             synopysis = ''
             extra = ''
-            anchor = modname
+            anchor = obj_name
 
             entries.append([
-                modname,  # name
+                obj_name,  # name
                 subtype,  # subtype
-                'autoapi/' + '/'.join(modname.split('.')) + '/index',  # docname
-                anchor,  # Anchor
-                extra,  # Extra
+                'autoapi/' + '/'.join(obj_name.split('.')) + '/index',  # docname
+                anchor,
+                extra,
                 qualifier,
                 synopysis,
             ])
 
         # sort by first letter
         content = sorted(content.iteritems())
-
         return content, False
 
 
@@ -523,17 +523,17 @@ class DotNetDomain(Domain):
                  for cls in _domain_types)
 
     initial_data = {
-        'objects': {},  # fullname -> docname, objtype
+        'objects': {},  # (ref_type, fullname) -> (docname, obj_type)
     }
 
     indices = [
         DotNetIndex,
     ]
 
-    def clear_doc(self, docname):
-        for fullname, (fn, _) in self.data['objects'].items():
-            if fn == docname:
-                del self.data['objects'][fullname]
+    def clear_doc(self, doc_name):
+        for (obj_type, obj_name), (obj_doc_name, _) in self.data['objects'].items():
+            if doc_name  == obj_doc_name:
+                del self.data['objects'][obj_type, obj_name]
 
     def find_obj(self, env, prefix, name, obj_type, searchorder=0):
         '''Find object reference
@@ -553,37 +553,41 @@ class DotNetDomain(Domain):
 
         objects = self.data['objects']
         newname = None
-
         if prefix is not None:
             fullname = '.'.join([prefix, name])
 
         if searchorder == 1:
-            if prefix and fullname in objects:
+            if prefix and (obj_type, fullname) in objects:
                 newname = fullname
             else:
                 newname = name
         else:
-            if name in objects:
+            if (obj_type, name) in objects:
                 newname = name
-            elif prefix and fullname in objects:
+            elif prefix and (obj_type, fullname) in objects:
                 newname = fullname
 
-        return newname, objects.get(newname)
+        return (obj_type, newname), objects.get((obj_type, newname),
+                                                (None, None))
 
     def resolve_xref(self, env, doc, builder, obj_type, target, node,
                      contnode):
         prefix = node.get('dn:prefix')
         searchorder = node.hasattr('refspecific') and 1 or 0
 
-        name, obj = self.find_obj(env, prefix, target, obj_type, searchorder)
-
-        if not obj:
+        (obj_type, obj_name), obj = self.find_obj(env, prefix, target, obj_type,
+                                                  searchorder)
+        try:
+            (obj_doc_name,) = obj
+        except (TypeError, ValueError):
             return None
-        return make_refnode(builder, doc, obj[0], name, contnode, name)
+        return make_refnode(builder, doc, obj_doc_name, obj_name, contnode,
+                            obj_name)
 
     def get_objects(self):
-        for obj_name, (obj_doc, obj_type) in self.data['objects'].iteritems():
-            yield obj_name, obj_name, obj_type, obj_doc, obj_name, 1
+        for (obj_type, obj_name), (obj_doc,) in self.data['objects'].iteritems():
+            obj_short_type = self.directives[obj_type].short_name
+            yield obj_name, obj_name, obj_short_type, obj_doc, obj_name, 1
 
 
 def setup(app):
