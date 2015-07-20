@@ -10,7 +10,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='sphinxcontrib-dotnetdomain',
-    version='0.1',
+    version='0.2',
     url='http://github.com/agjohnson/sphinxcontrib-dotnetdomain',
     download_url='http://pypi.python.org/pypi/sphinxcontrib-dotnetdomain',
     license='MIT',
