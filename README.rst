@@ -13,7 +13,7 @@ Sphinx .Net Domain
 
 This package provides a .Net domain for Sphinx documentation.
 
-Full documentation can be found on `Read the Docs <http://sphinxcontrib-dotnetdomain.readthedocs.org>`_.
+The best place to look for functionality currently is the `tests <https://github.com/rtfd/sphinxcontrib-dotnetdomain/tree/master/tests>`_.
 
 Contents
 --------
