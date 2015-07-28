@@ -58,6 +58,10 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(sig.full_name(), 'Foo.Bar<T><T>')
         sig = DotNetCallable.parse_signature('Foo.Bar<T><T><T>')
         self.assertEqual(sig.full_name(), 'Foo.Bar<T><T><T>')
+        sig = DotNetCallable.parse_signature('Foobar<TFoo>')
+        self.assertEqual(sig.full_name(), 'Foobar<TFoo>')
+        sig = DotNetCallable.parse_signature('Foobar<foo>')
+        self.assertEqual(sig.full_name(), 'Foobar<foo>')
 
     def test_callable_methods(self):
         '''Callable method parsing'''

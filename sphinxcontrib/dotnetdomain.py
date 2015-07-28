@@ -20,7 +20,7 @@ from docutils.parsers.rst import directives
 # Global regex parsing
 _re_parts = {}
 _re_parts['type_dimension'] = r'(?:\`\d+)?(?:\`\`\d+)?'
-_re_parts['type_generic'] = r'(?:\<T[0-9]?\>)+'
+_re_parts['type_generic'] = r'(?:\<(?:T[0-9]?|[^\>]+)\>)+'
 _re_parts['type'] = r'(?:%(type_dimension)s|%(type_generic)s)' % _re_parts
 _re_parts['name'] = r'[\w\_\-]+?%(type)s' % _re_parts
 
