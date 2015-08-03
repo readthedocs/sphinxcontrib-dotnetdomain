@@ -50,7 +50,7 @@ class ReferenceDefinitionTests(SphinxTestCase):
 
             .. dn:class:: ClassValid<T>
 
-            .. dn:class:: ClassValid<T><T><T>
+            .. dn:class:: ClassValid<T,T,T>
 
             .. dn:class:: ClassValid`1
 
@@ -62,7 +62,7 @@ class ReferenceDefinitionTests(SphinxTestCase):
         )
         self.assertRef('ClassValid', 'class')
         self.assertRef('ClassValid<T>', 'class')
-        self.assertRef('ClassValid<T><T><T>', 'class')
+        self.assertRef('ClassValid<T,T,T>', 'class')
         self.assertRef('ClassValid`1', 'class')
         self.assertRef('ClassValid`1``0', 'class')
         self.assertRef('ClassValid``0', 'class')
@@ -72,6 +72,8 @@ class ReferenceDefinitionTests(SphinxTestCase):
         self.app._mock_build(
             '''
             .. dn:class:: Class NotValid
+
+            .. dn:class:: ClassInvalid<T><T><T>
 
             .. dn:class:: ClassParens()
 
@@ -86,6 +88,8 @@ class ReferenceDefinitionTests(SphinxTestCase):
         self.assertNotRef('Class NotValid', 'class')
         assert 'WARNING: Parsing signature failed: "Class NotValid"' in warnings
         self.assertNotRef('ClassParens', 'class')
+        assert 'WARNING: Parsing signature failed: "ClassInvalid<T><T><T>"' in warnings
+        self.assertNotRef('ClassInvalid<T><T><T>', 'class')
         assert 'WARNING: Parsing signature failed: "ClassParens()"' in warnings
         self.assertNotRef('ClassValid`0`1', 'class')
         assert 'WARNING: Parsing signature failed: "ClassValid`0`1"' in warnings

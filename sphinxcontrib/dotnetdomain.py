@@ -20,7 +20,14 @@ from docutils.parsers.rst import directives
 # Global regex parsing
 _re_parts = {}
 _re_parts['type_dimension'] = r'(?:\`\d+)?(?:\`\`\d+)?'
-_re_parts['type_generic'] = r'(?:\<(?:T[0-9]?|[^\>]+)\>)+'
+_re_parts['type_generic'] = r'''
+    (?:\<
+        (?:[\w]+|\<.+?\>)
+        (?:,\s?
+            (?:[\w]+|\<.+?\>)
+        )*?
+    \>)(?!\<[^\>]+\>)
+'''
 _re_parts['type'] = r'(?:%(type_dimension)s|%(type_generic)s)' % _re_parts
 _re_parts['name'] = r'[\w\_\-]+?%(type)s' % _re_parts
 
@@ -308,9 +315,8 @@ class DotNetCallable(DotNetObject):
         (?:\((?P<arguments>[^)]*)\))?$
     ''' % _re_parts
 
+
 # Types
-
-
 class DotNetNamespace(DotNetObjectNested):
     short_name = 'ns'
     long_name = 'namespace'
@@ -421,9 +427,6 @@ class DotNetXRefRole(AnyXRefRole):
 
     '''XRef role to handle special .NET cases'''
 
-    # So, this is silly, because FooBar<T><T> links to `T><T`, and so on.
-    generic_pattern = re.compile(r'^T(?:\>\<T)*$')
-
     def process_link(self, env, refnode, has_explicit_title, title, target):
         '''This handles some special cases for reference links in .NET
 
@@ -439,8 +442,7 @@ class DotNetXRefRole(AnyXRefRole):
         super(DotNetXRefRole, self).process_link(env, refnode,
                                                  has_explicit_title, title,
                                                  target)
-        # Fix generic references that are accidentally titled references
-        if self.generic_pattern.match(target):
+        if title != target:
             target = title = '{title}<{target}>'.format(title=title,
                                                         target=target)
         return title, target
