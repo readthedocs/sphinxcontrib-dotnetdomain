@@ -51,14 +51,6 @@ class DotNetSignature(object):
             return '.'.join([self.prefix, self.member])
         return self.member
 
-    def prefix(self, prefix):
-        '''Return prefix of object, compared to input prefix
-
-        :param prefix: object prefix to compare against
-        '''
-        # TODO finish this
-        pass
-
     def __str__(self):
         return '.'.join([str(self.prefix), str(self.member)])
 
@@ -337,7 +329,7 @@ class DotNetStructure(DotNetObjectNested):
     display_prefix = 'structure '
 
 
-class DotNetInterface(DotNetObjectNested):
+class DotNetInterface(DotNetObjectNested):  # pylint: disable=interface-not-implemented
     short_name = 'iface'
     long_name = 'interface'
     display_prefix = 'interface '
@@ -538,7 +530,8 @@ class DotNetDomain(Domain):
     ]
 
     def clear_doc(self, doc_name):
-        for (obj_type, obj_name), (obj_doc_name, _) in self.data['objects'].items():
+        objects = list(self.data['objects'].items())
+        for (obj_type, obj_name), (obj_doc_name, _) in objects:
             if doc_name == obj_doc_name:
                 del self.data['objects'][obj_type, obj_name]
 
@@ -582,14 +575,15 @@ class DotNetDomain(Domain):
         prefix = node.get('dn:prefix')
         searchorder = node.hasattr('refspecific') and 1 or 0
 
-        (obj_type, obj_name), obj = self.find_obj(env, prefix, target, obj_type,
-                                                  searchorder)
+        found = self.find_obj(env, prefix, target, obj_type, searchorder)
         try:
+            # pylint: disable=unbalanced-tuple-unpacking
+            (obj_type, obj_name), obj = found
             (obj_doc_name,) = obj
+            return make_refnode(builder, doc, obj_doc_name, obj_name, contnode,
+                                obj_name)
         except (TypeError, ValueError):
             return None
-        return make_refnode(builder, doc, obj_doc_name, obj_name, contnode,
-                            obj_name)
 
     def get_objects(self):
         for (obj_type, obj_name), (obj_doc, obj_doc_type) in self.data['objects'].iteritems():
