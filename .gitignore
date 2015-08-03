@@ -9,3 +9,4 @@ dist/
 sphinxcontrib_dotnetdomain.egg-info/
 *.pyc
 *.sw[opmn]
+.tox
