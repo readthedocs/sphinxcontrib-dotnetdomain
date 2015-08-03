@@ -11,3 +11,9 @@ install:
   - pip install tox
 script:
   - tox -e $TOX_ENV
+notifications:
+  slack:
+    rooms:
+      - readthedocs:y3hjODOi7EIz1JAbD1Zb41sz#general
+    on_success: change
+    on_failure: always
