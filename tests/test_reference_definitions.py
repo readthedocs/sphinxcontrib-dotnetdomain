@@ -257,3 +257,29 @@ class ReferenceDefinitionTests(SphinxTestCase):
         self.assertRef('ValidClass.operator <=', 'operator')
         self.assertRef('ValidClass.operator true', 'operator')
         self.assertRef('ValidClass.implicit operator Some.Other.Type', 'operator')
+
+    def test_construct_options(self):
+        '''Construct directive options'''
+        self.app._mock_build(
+            '''
+            .. dn:class:: PublicClass
+                :public:
+
+            .. dn:class:: ProtectedClass
+                :protected:
+
+            .. dn:class:: StaticClass
+                :static:
+
+            .. dn:class:: NopeClass
+                :nope:
+            '''
+        )
+        self.assertIn('public PublicClass',
+                      self.app.builder.output['index'])
+        self.assertIn('protected ProtectedClass',
+                      self.app.builder.output['index'])
+        self.assertIn('static StaticClass',
+                      self.app.builder.output['index'])
+        self.assertIn('unknown option: "nope".',
+                      self.app._warning.getvalue())
