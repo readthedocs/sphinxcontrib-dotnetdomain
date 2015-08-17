@@ -165,21 +165,18 @@ class ReferenceDefinitionTests(SphinxTestCase):
 
                 .. dn:method:: MethodNoArgs()
 
-                .. dn:method:: MethodArg(arg1)
+                .. dn:method:: MethodArg(T1)
 
-                .. dn:method:: MethodArgs(arg1, arg2)
+                .. dn:method:: MethodArgs(T1, T2)
 
-                .. dn:method:: MethodGeneric(<T>, <T>)
-
-                .. dn:method:: MethodNestedGeneric(<T<A>>, <T<B>>)
+                .. dn:method:: MethodNested(List<int>, Dictionary<string,List<int>>)
 
             '''
         )
         self.assertRef('ValidClass.MethodNoArgs', 'method')
         self.assertRef('ValidClass.MethodArg', 'method')
         self.assertRef('ValidClass.MethodArgs', 'method')
-        self.assertRef('ValidClass.MethodGeneric', 'method')
-        self.assertRef('ValidClass.MethodNestedGeneric', 'method')
+        self.assertRef('ValidClass.MethodNested', 'method')
 
     def test_ctor(self):
         '''Constructor method parsing'''
@@ -246,10 +243,10 @@ class ReferenceDefinitionTests(SphinxTestCase):
             .. dn:class:: ValidClass
 
                 .. dn:operator:: AnInvalidOperatorWeParseAnyways
-                .. dn:operator:: operator ==(arg1, arg2)
-                .. dn:operator:: operator <=(arg1, arg2)
-                .. dn:operator:: operator true(arg1, arg2)
-                .. dn:operator:: implicit operator Some.Other.Type(arg1)
+                .. dn:operator:: operator ==(T1, T2)
+                .. dn:operator:: operator <=(T1, T2)
+                .. dn:operator:: operator true(T1, T2)
+                .. dn:operator:: implicit operator Some.Other.Type(T1)
             '''
         )
         self.assertRef('ValidClass.AnInvalidOperatorWeParseAnyways', 'operator')
