@@ -650,7 +650,7 @@ class DotNetDomain(Domain):
         try:
             # pylint: disable=unbalanced-tuple-unpacking
             (obj_type, obj_name), obj = found
-            (obj_doc_name,) = obj
+            (obj_doc_name, _) = obj
             return make_refnode(builder, doc, obj_doc_name, obj_name, contnode,
                                 obj_name)
         except (TypeError, ValueError):
