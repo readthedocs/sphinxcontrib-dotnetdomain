@@ -283,3 +283,41 @@ class ReferenceDefinitionTests(SphinxTestCase):
                       self.app.builder.output['index'])
         self.assertIn('unknown option: "nope".',
                       self.app._warning.getvalue())
+
+    def test_property_options(self):
+        '''Property directive options'''
+        self.app._mock_build(
+            '''
+            .. dn:property:: GetProperty
+                :getter:
+
+            .. dn:property:: SetProperty
+                :setter:
+
+            .. dn:property:: Property
+                :getter:
+                :setter:
+            '''
+        )
+        self.assertRef('GetProperty', 'property')
+        self.assertRef('SetProperty', 'property')
+        self.assertRef('Property', 'property')
+
+    def test_field_options(self):
+        '''Field directive options'''
+        self.app._mock_build(
+            '''
+            .. dn:field:: AdderField
+                :adder:
+
+            .. dn:field:: RemoverField
+                :remover:
+
+            .. dn:field:: Field
+                :adder:
+                :remover:
+            '''
+        )
+        self.assertRef('AdderField', 'field')
+        self.assertRef('RemoverField', 'field')
+        self.assertRef('Field', 'field')

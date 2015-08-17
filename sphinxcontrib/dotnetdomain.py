@@ -388,11 +388,23 @@ class DotNetProperty(DotNetCallable):
     short_name = 'prop'
     long_name = 'property'
 
+    option_spec = dict(
+        item for obj in [DotNetCallable.option_spec,
+                         {'getter': directives.flag,
+                          'setter': directives.flag}]
+        for item in obj.items())
+
 
 class DotNetField(DotNetCallable):
     class_object = True
     short_name = 'field'
     long_name = 'field'
+
+    option_spec = dict(
+        item for obj in [DotNetCallable.option_spec,
+                         {'adder': directives.flag,
+                          'remover': directives.flag}]
+        for item in obj.items())
 
 
 class DotNetEvent(DotNetCallable):
