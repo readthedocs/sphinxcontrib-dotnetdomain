@@ -94,6 +94,13 @@ class DotNetObject(ObjectDescription):
     long_name = None
     signature_pattern = None
 
+    option_spec = dict(
+        item for obj in [ObjectDescription.option_spec,
+                         {'public': directives.flag,
+                          'protected': directives.flag,
+                          'static': directives.flag}]
+        for item in obj.items())
+
     @classmethod
     def parse_signature(cls, signature):
         '''Parse signature declartion string
@@ -161,9 +168,14 @@ class DotNetObject(ObjectDescription):
         signode['prefix'] = sig.prefix
         signode['fullname'] = sig.full_name()
 
+        # Prefix modifiers
         if self.display_prefix:
             signode += addnodes.desc_annotation(self.display_prefix,
                                                 self.display_prefix)
+        for prefix in ['public', 'protected', 'static']:
+            if prefix in self.options:
+                signode += addnodes.desc_annotation(prefix + ' ',
+                                                    prefix + ' ')
 
         # Show prefix only on shorter declarations
         if sig.prefix is not None and not self.has_arguments:
@@ -234,10 +246,10 @@ class DotNetObjectNested(DotNetObject):
 
     '''Nestable object'''
 
-    option_spec = {
-        'noindex': directives.flag,
-        'hidden': directives.flag,
-    }
+    option_spec = dict(
+        item for obj in [DotNetObject.option_spec,
+                         {'hidden': directives.flag}]
+        for item in obj.items())
 
     signature_pattern = r'''
         ^(?:(?P<prefix>.+)\.)?
@@ -373,15 +385,58 @@ class DotNetConstructor(DotNetCallable):
 
 
 class DotNetProperty(DotNetCallable):
+    '''Property object definition
+
+    Properties can be defined with the following options:
+
+        getter
+            Property has a getter
+
+        setter
+            Property has a setter
+
+    For example::
+
+        .. dn:property:: Example()
+            :getter:
+    '''
     class_object = True
     short_name = 'prop'
     long_name = 'property'
 
+    option_spec = dict(
+        item for obj in [DotNetCallable.option_spec,
+                         {'getter': directives.flag,
+                          'setter': directives.flag}]
+        for item in obj.items())
+
 
 class DotNetField(DotNetCallable):
+    '''Field object definition
+
+    Fields can be defined with the following options:
+
+        adder
+            Field adder
+
+        remover
+            Field remover
+
+    For example::
+
+        .. dn:field:: Example
+            :adder:
+            :remover:
+    '''
     class_object = True
     short_name = 'field'
     long_name = 'field'
+
+    option_spec = dict(
+        item for obj in [DotNetCallable.option_spec,
+                         {'adder': directives.flag,
+                          'remover': directives.flag}]
+        for item in obj.items())
 
 
 class DotNetEvent(DotNetCallable):
