@@ -12,24 +12,46 @@ class XRefTests(SphinxTestCase):
             '''
             .. dn:namespace:: ValidNamespace
             .. dn:class:: ValidClass
-            .. dn:structure:: ValidStructure
+            .. dn:struct:: ValidStructure
             .. dn:interface:: ValidInterface
             .. dn:delegate:: ValidDelegate
-            .. dn:enumeration:: ValidEnumeration
+            .. dn:enum:: ValidEnumeration
 
             :dn:ns:`ValidNamespace`
+            :dn:namespace:`ValidNamespace`
             :dn:cls:`ValidClass`
+            :dn:class:`ValidClass`
             :dn:struct:`ValidStructure`
+            :dn:structure:`ValidStructure`
             :dn:iface:`ValidInterface`
+            :dn:interface:`ValidInterface`
             :dn:del:`ValidDelegate`
+            :dn:delegate:`ValidDelegate`
             :dn:enum:`ValidEnumeration`
+            :dn:enumeration:`ValidEnumeration`
             ''')
-        self.assertXRef('ValidNamespace', obj_type='namespace')
-        self.assertXRef('ValidClass', obj_type='class')
-        self.assertXRef('ValidStructure', obj_type='structure')
-        self.assertXRef('ValidInterface', obj_type='interface')
-        self.assertXRef('ValidDelegate', obj_type='delegate')
-        self.assertXRef('ValidEnumeration', obj_type='enumeration')
+        self.assertXRef('ValidNamespace', obj_type='namespace',
+                        obj_ref_type='namespace')
+        self.assertXRef('ValidNamespace', obj_type='namespace',
+                        obj_ref_type='ns')
+        self.assertXRef('ValidClass', obj_type='class', obj_ref_type='class')
+        self.assertXRef('ValidClass', obj_type='class', obj_ref_type='cls')
+        self.assertXRef('ValidStructure', obj_type='struct',
+                        obj_ref_type='struct')
+        self.assertXRef('ValidStructure', obj_type='struct',
+                        obj_ref_type='structure')
+        self.assertXRef('ValidInterface', obj_type='interface',
+                        obj_ref_type='iface')
+        self.assertXRef('ValidInterface', obj_type='interface',
+                        obj_ref_type='interface')
+        self.assertXRef('ValidDelegate', obj_type='delegate',
+                        obj_ref_type='del')
+        self.assertXRef('ValidDelegate', obj_type='delegate',
+                        obj_ref_type='delegate')
+        self.assertXRef('ValidEnumeration', obj_type='enum',
+                        obj_ref_type='enum')
+        self.assertXRef('ValidEnumeration', obj_type='enum',
+                        obj_ref_type='enumeration')
 
     def test_nested_xref(self):
         '''Cross references nested one level deep in a namespace'''
@@ -44,23 +66,23 @@ class XRefTests(SphinxTestCase):
                 * :dn:enum:`NestedEnumeration`
 
                 .. dn:class:: NestedClass
-                .. dn:structure:: NestedStructure
+                .. dn:struct:: NestedStructure
                 .. dn:interface:: NestedInterface
                 .. dn:delegate:: NestedDelegate
-                .. dn:enumeration:: NestedEnumeration
+                .. dn:enum:: NestedEnumeration
             ''')
         self.assertRef('ValidNamespace', 'namespace')
 
         self.assertXRef('NestedClass', prefix='ValidNamespace',
                         obj_type='class')
         self.assertXRef('NestedStructure', prefix='ValidNamespace',
-                        obj_type='structure')
+                        obj_type='struct')
         self.assertXRef('NestedInterface', prefix='ValidNamespace',
                         obj_type='interface')
         self.assertXRef('NestedDelegate', prefix='ValidNamespace',
                         obj_type='delegate')
         self.assertXRef('NestedEnumeration', prefix='ValidNamespace',
-                        obj_type='enumeration')
+                        obj_type='enum')
 
     def test_nested_toplevel_xref(self):
         '''Cross references nested one level deep in a namespace'''
@@ -69,10 +91,10 @@ class XRefTests(SphinxTestCase):
             .. dn:namespace:: ValidNamespace
 
                 .. dn:class:: NestedClass
-                .. dn:structure:: NestedStructure
+                .. dn:struct:: NestedStructure
                 .. dn:interface:: NestedInterface
                 .. dn:delegate:: NestedDelegate
-                .. dn:enumeration:: NestedEnumeration
+                .. dn:enum:: NestedEnumeration
 
             * :dn:cls:`ValidNamespace.NestedClass`
             * :dn:struct:`ValidNamespace.NestedStructure`
@@ -83,10 +105,67 @@ class XRefTests(SphinxTestCase):
         self.assertRef('ValidNamespace', 'namespace')
 
         self.assertXRef('ValidNamespace.NestedClass', obj_type='class')
-        self.assertXRef('ValidNamespace.NestedStructure', obj_type='structure')
+        self.assertXRef('ValidNamespace.NestedStructure', obj_type='struct')
         self.assertXRef('ValidNamespace.NestedInterface', obj_type='interface')
         self.assertXRef('ValidNamespace.NestedDelegate', obj_type='delegate')
-        self.assertXRef('ValidNamespace.NestedEnumeration', obj_type='enumeration')
+        self.assertXRef('ValidNamespace.NestedEnumeration', obj_type='enum')
+
+    def test_xref_long_names(self):
+        '''Long name xref directives'''
+        self.app._mock_build(
+            '''
+            .. dn:namespace:: NamespaceFoo
+            .. dn:struct:: StructFoo
+            .. dn:interface:: InterfaceFoo
+            .. dn:delegate:: DelegateFoo
+            .. dn:enum:: EnumFoo
+            .. dn:class:: ClassFoo
+            .. dn:method:: MethodFoo()
+            .. dn:property:: PropertyFoo()
+            .. dn:operator:: OperatorFoo()
+
+            * :dn:namespace:`NamespaceFoo`
+            * :dn:ns:`NamespaceFoo`
+            * :dn:class:`ClassFoo`
+            * :dn:interface:`InterfaceFoo`
+            * :dn:delegate:`DelegateFoo`
+            * :dn:method:`MethodFoo`
+            * :dn:property:`PropertyFoo`
+            * :dn:operator:`OperatorFoo`
+            ''')
+
+        for (type_short, type_long) in [('ns', 'namespace'),
+                                        ('cls', 'class'),
+                                        ('meth', 'method'),
+                                        ('prop', 'property'),
+                                        ('op', 'operator'),
+                                        ('del', 'delegate'),
+                                        ('iface', 'interface')]:
+            # Lookup for long type exists
+            self.assertXRef(
+                '{0}Foo'.format(type_long.title()),
+                #prefix='ClassFoo',
+                obj_type=type_long,
+                obj_ref_type=type_long
+            )
+            # Lookup for short type doesn't exist yet
+            self.assertNoXRef(
+                '{0}Foo'.format(type_long.title()),
+                #prefix='ClassFoo',
+                obj_type=type_short,
+                obj_ref_type=type_long
+            )
+            # Short name xref = long name xref
+            ret = self.app.env.domains['dn'].find_obj(
+                self.app.env,
+                None,
+                '{0}Foo'.format(type_long.title()),
+                type_short)
+            self.assertEqual(
+                ret,
+                ((type_short, '{0}Foo'.format(type_long.title())),
+                 ('index', type_long))
+            )
 
     def test_class_member_xref(self):
         '''Class member cross references'''

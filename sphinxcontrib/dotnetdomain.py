@@ -4,6 +4,7 @@ API documentation support for .NET langauges
 '''
 
 import re
+from itertools import chain
 
 from sphinx import addnodes
 from sphinx.domains import Domain, ObjType, Index
@@ -219,7 +220,7 @@ class DotNetObject(ObjectDescription):
 
     @classmethod
     def get_type(cls):
-        return ObjType(l_(cls.long_name), cls.short_name)
+        return ObjType(l_(cls.long_name), (cls.short_name, cls.long_name))
 
 
 class DotNetObjectNested(DotNetObject):
@@ -326,7 +327,7 @@ class DotNetClass(DotNetObjectNested):
 class DotNetStructure(DotNetObjectNested):
     short_name = 'struct'
     long_name = 'structure'
-    display_prefix = 'structure '
+    display_prefix = 'struct '
 
 
 class DotNetInterface(DotNetObjectNested):  # pylint: disable=interface-not-implemented
@@ -344,7 +345,7 @@ class DotNetDelegate(DotNetObjectNested):
 class DotNetEnumeration(DotNetObjectNested):
     short_name = 'enum'
     long_name = 'enumeration'
-    display_prefix = 'enumeration '
+    display_prefix = 'enum '
 
 
 # Members
@@ -516,10 +517,16 @@ class DotNetDomain(Domain):
 
     object_types = dict((cls.long_name, cls.get_type())
                         for cls in _domain_types)
-    directives = dict((cls.long_name, cls)
-                      for cls in _domain_types)
-    roles = dict((cls.short_name, DotNetXRefRole())
-                 for cls in _domain_types)
+    directives = dict(chain(
+        ((cls.long_name, cls) for cls in _domain_types),
+        ((cls.short_name, cls) for cls in _domain_types),
+    ))
+    roles = dict(chain(
+        ((cls.short_name, DotNetXRefRole())
+         for cls in _domain_types),
+        ((cls.long_name, DotNetXRefRole())
+         for cls in _domain_types)
+    ))
 
     initial_data = {
         'objects': {},  # (ref_type, fullname) -> (docname, obj_type)
@@ -550,6 +557,13 @@ class DotNetDomain(Domain):
 
         if not name:
             return []
+
+        for cls in _domain_types:
+            if obj_type == cls.long_name:
+                obj_type = cls.short_name
+
+        if obj_type == 'namespace':
+            obj_type = 'ns'
 
         objects = self.data['objects']
         newname = None

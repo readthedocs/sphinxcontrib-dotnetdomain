@@ -118,39 +118,38 @@ class ReferenceDefinitionTests(SphinxTestCase):
         '''Nested constructs besides class'''
         self.app._mock_build(
             '''
-            .. dn:structure:: ValidStructure
+            .. dn:struct:: ValidStructure
             .. dn:interface:: ValidInterface
             .. dn:delegate:: ValidDelegate
-            .. dn:enumeration:: ValidEnumeration
+            .. dn:enum:: ValidEnumeration
 
             .. dn:namespace:: ValidNamespace
 
-                .. dn:structure:: NestedStructure
+                .. dn:struct:: NestedStructure
                 .. dn:interface:: NestedInterface
                 .. dn:delegate:: NestedDelegate
-                .. dn:enumeration:: NestedEnumeration
+                .. dn:enum:: NestedEnumeration
 
             .. dn:namespace:: UnNestedNamespace
 
-            .. dn:structure:: UnNestedNamespace.UnNestedStructure
+            .. dn:struct:: UnNestedNamespace.UnNestedStructure
             .. dn:interface:: UnNestedNamespace.UnNestedInterface
             .. dn:delegate:: UnNestedNamespace.UnNestedDelegate
-            .. dn:enumeration:: UnNestedNamespace.UnNestedEnumeration
+            .. dn:enum:: UnNestedNamespace.UnNestedEnumeration
             '''
         )
-        self.assertRef('ValidStructure', 'structure')
-        self.assertRef('ValidNamespace.NestedStructure', 'structure')
-        self.assertRef('UnNestedNamespace.UnNestedStructure', 'structure')
+        self.assertRef('ValidStructure', 'struct')
+        self.assertRef('ValidNamespace.NestedStructure', 'struct')
+        self.assertRef('UnNestedNamespace.UnNestedStructure', 'struct')
         self.assertRef('ValidInterface', 'interface')
         self.assertRef('ValidNamespace.NestedInterface', 'interface')
         self.assertRef('UnNestedNamespace.UnNestedInterface', 'interface')
         self.assertRef('ValidDelegate', 'delegate')
         self.assertRef('ValidNamespace.NestedDelegate', 'delegate')
         self.assertRef('UnNestedNamespace.UnNestedDelegate', 'delegate')
-        self.assertRef('ValidEnumeration', 'enumeration')
-        self.assertRef('ValidNamespace.NestedEnumeration', 'enumeration')
-        self.assertRef('UnNestedNamespace.UnNestedEnumeration', 'enumeration')
-
+        self.assertRef('ValidEnumeration', 'enum')
+        self.assertRef('ValidNamespace.NestedEnumeration', 'enum')
+        self.assertRef('UnNestedNamespace.UnNestedEnumeration', 'enum')
 
     # Test callable members
     def test_method_args(self):
