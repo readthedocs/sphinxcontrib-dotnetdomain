@@ -384,6 +384,21 @@ class DotNetConstructor(DotNetCallable):
 
 
 class DotNetProperty(DotNetCallable):
+    '''Property object definition
+
+    Properties can be defined with the following options:
+
+        getter
+            Property has a getter
+
+        setter
+            Property has a setter
+
+    For example::
+
+        .. dn:property:: Example()
+            :getter:
+    '''
     class_object = True
     short_name = 'prop'
     long_name = 'property'
@@ -396,6 +411,22 @@ class DotNetProperty(DotNetCallable):
 
 
 class DotNetField(DotNetCallable):
+    '''Field object definition
+
+    Fields can be defined with the following options:
+
+        adder
+            Field adder
+
+        remover
+            Field remover
+
+    For example::
+
+        .. dn:field:: Example
+            :adder:
+            :remover:
+    '''
     class_object = True
     short_name = 'field'
     long_name = 'field'
