@@ -84,8 +84,10 @@ class ParseTests(unittest.TestCase):
         '''Class constructor methods'''
         sig = DotNetConstructor.parse_signature('Foo.Bar.#ctor')
         self.assertEqual(sig.full_name(), 'Foo.Bar.#ctor')
-        sig = DotNetConstructor.parse_signature('Foo.Bar.#ctor(arg1)')
+        sig = DotNetConstructor.parse_signature('Foo.Bar.#ctor(T1)')
         self.assertEqual(sig.full_name(), 'Foo.Bar.#ctor')
+        sig = DotNetConstructor.parse_signature('Foo.Bar.Something(T1)')
+        self.assertEqual(sig.full_name(), 'Foo.Bar.Something')
 
     def test_ctor_invalid(self):
         '''Invalid class constructor methods'''
