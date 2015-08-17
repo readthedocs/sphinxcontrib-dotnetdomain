@@ -129,8 +129,8 @@ class SphinxTestCase(unittest.TestCase):
         else:
             AssertionError('Reference match found')
 
-    def assertXRef(self, name, prefix=None, obj_type=None, doc='index',
-                   ret_name=None):
+    def assertXRef(self, name, prefix=None, obj_type=None, obj_ref_type=None,
+                   doc='index', ret_name=None):
         '''Assert mocked find_obj was called correctly
 
         Test that inline references generate the correct calls and return to
@@ -148,7 +148,10 @@ class SphinxTestCase(unittest.TestCase):
         # Get class short name for reference first
         self.assertIn(obj_type, self.app.env.domains['dn'].directives,
                       'Missing reference type: %s' % obj_type)
-        obj_ref_type = self.app.env.domains['dn'].directives[obj_type].short_name
+        if obj_ref_type is None:
+            obj_ref_type = (self.app.env.domains['dn']
+                            .directives[obj_type]
+                            .short_name)
         # Assert called correctly and return exists
         args = (self.app.env, prefix, name, obj_ref_type, 0)
         self.mocked_find_obj.assert_has_calls(calls=[(args, {})])
