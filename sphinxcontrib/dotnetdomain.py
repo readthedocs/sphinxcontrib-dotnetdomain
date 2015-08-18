@@ -22,12 +22,12 @@ from docutils.parsers.rst import directives
 _re_parts = {}
 _re_parts['type_dimension'] = r'(?:\`\d+)?(?:\`\`\d+)?'
 _re_parts['type_generic'] = r'''
-    (?:\<
-        (?:[\w]+|\<.+?\>)
+    (?:[\<\{]
+        (?:[\w]+|[\<\{].+?[\>\}])
         (?:,\s?
-            (?:[\w]+|\<.+?\>)
+            (?:[\w]+|[\<\{].+?[\>\}])
         )*?
-    \>)(?!\<[^\>]+\>)
+    [\>\}])(?![\<\{][^\>\}]+[\>\}])
 '''
 _re_parts['type'] = r'(?:%(type_dimension)s|%(type_generic)s)' % _re_parts
 _re_parts['name'] = r'[\w\_\-]+?%(type)s' % _re_parts
