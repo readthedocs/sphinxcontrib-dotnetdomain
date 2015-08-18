@@ -122,29 +122,25 @@ class ParseTests(unittest.TestCase):
     def test_operator(self):
         '''Operator signature parsing'''
         # Implicit operator
-        sig = DotNetOperator.parse_signature('Foo.implicit operator Bar(arg)')
+        sig = DotNetOperator.parse_signature('Foo.op_implicit(arg)')
         self.assertEqual(sig.prefix, 'Foo')
-        self.assertEqual(sig.member, 'implicit operator Bar')
-        raw = ('Microsoft.CodeAnalysis.Options.Option<T>.implicit operator '
-               'Microsoft.CodeAnalysis.Options.OptionKey'
+        self.assertEqual(sig.member, 'op_implicit')
+        raw = ('Microsoft.CodeAnalysis.Options.Option<T>.op_implicit'
                '(Microsoft.CodeAnalysis.Options.Option<T>)')
         sig = DotNetOperator.parse_signature(raw)
         self.assertEqual(sig.prefix,
                          'Microsoft.CodeAnalysis.Options.Option<T>')
-        self.assertEqual(sig.member,
-                         ('implicit operator '
-                          'Microsoft.CodeAnalysis.Options.OptionKey'))
-        self.assertEqual(sig.full_name(),
-                         ('Microsoft.CodeAnalysis.Options.Option<T>'
-                          '.implicit operator '
-                          'Microsoft.CodeAnalysis.Options.OptionKey'))
+        self.assertEqual(sig.member, 'op_implicit')
         # Other operators
-        sig = DotNetOperator.parse_signature('Foo.operator <=(arg)')
-        self.assertEqual(sig.member, 'operator <=')
-        sig = DotNetOperator.parse_signature('Foo.operator true(arg)')
-        self.assertEqual(sig.member, 'operator true')
-        sig = DotNetOperator.parse_signature('Foo.operator false(arg)')
-        self.assertEqual(sig.member, 'operator false')
+        sig = DotNetOperator.parse_signature('Foo.op_LessThanOrEqual(T1)')
+        self.assertEqual(sig.member, 'op_LessThanOrEqual')
+        sig = DotNetOperator.parse_signature('Foo.op_True(T1)')
+        self.assertEqual(sig.member, 'op_True')
+        sig = DotNetOperator.parse_signature('Foo.op_False(T1)')
+        self.assertEqual(sig.member, 'op_False')
+        # Some old/no longer valid or used declarations
+        self.assertRaises(ValueError, DotNetOperator.parse_signature,
+                          'Foo.operator ==(args)')
         self.assertRaises(ValueError, DotNetOperator.parse_signature,
                           'Foo.operator foo(args)')
         self.assertRaises(ValueError, DotNetOperator.parse_signature,
@@ -153,13 +149,6 @@ class ParseTests(unittest.TestCase):
                           'Foo.operator ==foo(args)')
         self.assertRaises(ValueError, DotNetOperator.parse_signature,
                           'Foo.operator <==>(args)')
-
-        raw = ('Microsoft.CodeAnalysis.ProjectId.operator '
-               '==(Microsoft.CodeAnalysis.ProjectId, '
-               'Microsoft.CodeAnalysis.ProjectId)')
-        sig = DotNetOperator.parse_signature(raw)
-        self.assertEqual(sig.full_name(),
-                         'Microsoft.CodeAnalysis.ProjectId.operator ==')
 
     def test_slow_backtrack(self):
         '''Slow query because of excessive backtracking'''
