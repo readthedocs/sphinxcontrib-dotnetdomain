@@ -447,35 +447,9 @@ class DotNetEvent(DotNetCallable):
 
 class DotNetOperator(DotNetCallable):
 
-    '''Operator object with special parsing
-
-    Parses out signatures that match several cases:
-
-        Prefix.operator ==(args)
-        Prefix.operator true(args)
-        Prefix.operator false(args)
-            This is parsed out with respect to overloadable operators, found at:
-            <https://msdn.microsoft.com/en-us/library/8edha89s.aspx>. We won't
-            list the operators we are searching for here, rather just expect
-            1-3 non-word characters.
-
-        Prefix.implicit operator Prefix.Type(args)
-            Implicit operators specify return type in the declaration, which we
-            don't do anything here but use for the reference. Separate return
-            type is expected as well.
-    '''
-
     class_object = True
     short_name = 'op'
     long_name = 'operator'
-    signature_pattern = r'''
-        ^(?:(?P<prefix>\S+?)\.)?
-        (?P<member>(?:
-            (?:implicit\soperator\s(?:\S+\.)?)?%(name)s |
-            operator\s(?:true|false|\W{1,3})
-        ))
-        (?:\((?P<arguments>[^)]*)\))?$
-    ''' % _re_parts
 
 
 # Cross referencing

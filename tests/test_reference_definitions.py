@@ -242,17 +242,17 @@ class ReferenceDefinitionTests(SphinxTestCase):
             .. dn:class:: ValidClass
 
                 .. dn:operator:: AnInvalidOperatorWeParseAnyways
-                .. dn:operator:: operator ==(T1, T2)
-                .. dn:operator:: operator <=(T1, T2)
-                .. dn:operator:: operator true(T1, T2)
-                .. dn:operator:: implicit operator Some.Other.Type(T1)
+                .. dn:operator:: op_Equal(T1, T2)
+                .. dn:operator:: op_LessThanOrEqual(T1, T2)
+                .. dn:operator:: op_True(T1, T2)
+                .. dn:operator:: op_implicit(T1)
             '''
         )
         self.assertRef('ValidClass.AnInvalidOperatorWeParseAnyways', 'operator')
-        self.assertRef('ValidClass.operator ==', 'operator')
-        self.assertRef('ValidClass.operator <=', 'operator')
-        self.assertRef('ValidClass.operator true', 'operator')
-        self.assertRef('ValidClass.implicit operator Some.Other.Type', 'operator')
+        self.assertRef('ValidClass.op_Equal', 'operator')
+        self.assertRef('ValidClass.op_LessThanOrEqual', 'operator')
+        self.assertRef('ValidClass.op_True', 'operator')
+        self.assertRef('ValidClass.op_implicit', 'operator')
 
     def test_construct_options(self):
         '''Construct directive options'''
