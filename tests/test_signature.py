@@ -106,8 +106,18 @@ class ParseTests(unittest.TestCase):
     @unittest.expectedFailure
     def test_generic_braces(self):
         '''Unknown generic syntax parsing with braces'''
-        sig = DotNetCallable.parse_signature('Foo.Bar{`1}')
+        sig = DotNetCallable.parse_signature('Foo.Bar{`1}()')
         self.assertEqual(sig.full_name(), 'Foo.Bar{`1}')
+
+    def test_alternate_generic(self):
+        '''Unknown brace syntax common in references'''
+        sig = DotNetCallable.parse_signature(
+            'System.Linq.Expressions.Expression'
+            '{System.Func{{TUser},System.Boolean}}')
+        self.assertEqual(
+            sig.full_name(),
+            ('System.Linq.Expressions.Expression'
+             '{System.Func{{TUser},System.Boolean}}'))
 
     def test_operator(self):
         '''Operator signature parsing'''
