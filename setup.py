@@ -11,7 +11,7 @@ from setuptools import setup, find_packages
 setup(
     name='sphinxcontrib-dotnetdomain',
     version='0.2',
-    url='http://github.com/agjohnson/sphinxcontrib-dotnetdomain',
+    url='http://github.com/rtfd/sphinxcontrib-dotnetdomain',
     download_url='http://pypi.python.org/pypi/sphinxcontrib-dotnetdomain',
     license='MIT',
     author='Anthony Johnson',
