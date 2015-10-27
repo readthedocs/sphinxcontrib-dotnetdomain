@@ -507,7 +507,7 @@ class DotNetIndex(Index):
 
     def generate(self, doc_names=None):
         content = {}
-        objects = sorted(self.domain.data['objects'].iteritems(),
+        objects = sorted(self.domain.data['objects'].items(),
                          key=lambda x: x[1][0].lower())
         for (obj_type, obj_name), (obj_doc_name, _) in objects:
             if doc_names and obj_doc_name not in doc_names:
@@ -535,7 +535,7 @@ class DotNetIndex(Index):
             ])
 
         # sort by first letter
-        content = sorted(content.iteritems())
+        content = sorted(content.items())
         return content, False
 
 
@@ -633,7 +633,7 @@ class DotNetDomain(Domain):
             return None
 
     def get_objects(self):
-        for (obj_type, obj_name), (obj_doc, obj_doc_type) in self.data['objects'].iteritems():
+        for (obj_type, obj_name), (obj_doc, obj_doc_type) in self.data['objects'].items():
             obj_short_type = self.directives[obj_doc_type].short_name
             yield obj_name, obj_name, obj_short_type, obj_doc, obj_name, 1
 
