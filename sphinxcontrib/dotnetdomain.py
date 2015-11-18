@@ -457,6 +457,10 @@ class DotNetXRefRole(AnyXRefRole):
 
     '''XRef role to handle special .NET cases'''
 
+    def __init__(self, *args, **kwargs):
+        self.alternate_role = kwargs.pop('alternate_role', False)
+        super(DotNetXRefRole, self).__init__(*args, **kwargs)
+
     def process_link(self, env, refnode, has_explicit_title, title, target):
         '''This handles some special cases for reference links in .NET
 
@@ -555,7 +559,7 @@ class DotNetDomain(Domain):
     roles = dict(chain(
         ((cls.short_name, DotNetXRefRole())
          for cls in _domain_types),
-        ((cls.long_name, DotNetXRefRole())
+        ((cls.long_name, DotNetXRefRole(alternate_role=True))
          for cls in _domain_types)
     ))
 
@@ -631,6 +635,23 @@ class DotNetDomain(Domain):
                                 obj_name)
         except (TypeError, ValueError):
             return None
+
+    def resolve_any_xref(self, env, doc, builder, target, node, contnode):
+        """Using main domain roles, look for defined objects
+
+        This method is called when the ``:any:`` reference lookup is used. The
+        default implementation uses all of the roles defined on the domain, so
+        alternate roles are used here to only use the main roles for object
+        lookups.
+        """
+        results = []
+        for role in self.roles:
+            if not self.roles[role].alternate_role:
+                found = self.resolve_xref(env, doc, builder, role,
+                                          target, node, contnode)
+                if found is not None:
+                    results.append((role, found))
+        return results
 
     def get_objects(self):
         for (obj_type, obj_name), (obj_doc, obj_doc_type) in self.data['objects'].items():

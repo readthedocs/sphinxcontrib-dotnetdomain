@@ -167,6 +167,31 @@ class XRefTests(SphinxTestCase):
                  ('index', type_long))
             )
 
+    def test_xref_duplication_on_long_names(self):
+        '''Long name xref directives aren't duplicates'''
+        self.app._mock_build(
+            '''
+            .. dn:namespace:: NamespaceFoo
+            .. dn:struct:: StructFoo
+            .. dn:interface:: InterfaceFoo
+            .. dn:delegate:: DelegateFoo
+            .. dn:enum:: EnumFoo
+            .. dn:class:: ClassFoo
+            .. dn:method:: MethodFoo()
+            .. dn:property:: PropertyFoo()
+            .. dn:operator:: OperatorFoo()
+
+            * :any:`NamespaceFoo`
+            * :any:`ClassFoo`
+            * :any:`InterfaceFoo`
+            * :any:`DelegateFoo`
+            * :any:`MethodFoo`
+            * :any:`PropertyFoo`
+            * :any:`OperatorFoo`
+            ''')
+        warnings = self.app._warning.getvalue()
+        self.assertEqual(warnings, '')
+
     def test_class_member_xref(self):
         '''Class member cross references'''
         self.app._mock_build(
