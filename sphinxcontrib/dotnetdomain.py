@@ -6,6 +6,8 @@ API documentation support for .NET langauges
 import re
 from itertools import chain
 
+from six import string_types, iteritems
+
 from sphinx import addnodes
 from sphinx.domains import Domain, ObjType, Index
 from sphinx.locale import l_
@@ -570,6 +572,23 @@ class DotNetDomain(Domain):
     indices = [
         DotNetIndex,
     ]
+
+    def __init__(self, *args, **kwargs):
+        super(DotNetDomain, self).__init__(*args, **kwargs)
+        self._role2type = {}
+        self._type2role = {}
+        for name, obj in iteritems(self.object_types):
+            for roles in obj.roles:
+                if isinstance(roles, string_types):
+                    roles = [roles]
+                try:
+                    for rolename in roles:
+                        self._role2type.setdefault(rolename, []).append(name)
+                except TypeError:
+                    pass
+            self._type2role[name] = obj.roles[0] if obj.roles else ''
+        self.objtypes_for_role = self._role2type.get
+        self.role_for_objtype = self._type2role.get
 
     def clear_doc(self, doc_name):
         objects = list(self.data['objects'].items())
