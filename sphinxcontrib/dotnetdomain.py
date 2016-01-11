@@ -350,7 +350,7 @@ class DotNetStructure(DotNetObjectNested):
     display_prefix = 'struct '
 
 
-class DotNetInterface(DotNetObjectNested):  # pylint: disable=interface-not-implemented
+class DotNetInterface(DotNetObjectNested):
     short_name = 'iface'
     long_name = 'interface'
     display_prefix = 'interface '
