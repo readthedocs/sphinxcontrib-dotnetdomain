@@ -6,6 +6,8 @@ API documentation support for .NET langauges
 import re
 from itertools import chain
 
+from six import string_types, iteritems
+
 from sphinx import addnodes
 from sphinx.domains import Domain, ObjType, Index
 from sphinx.locale import l_
@@ -348,7 +350,7 @@ class DotNetStructure(DotNetObjectNested):
     display_prefix = 'struct '
 
 
-class DotNetInterface(DotNetObjectNested):  # pylint: disable=interface-not-implemented
+class DotNetInterface(DotNetObjectNested):
     short_name = 'iface'
     long_name = 'interface'
     display_prefix = 'interface '
@@ -571,6 +573,26 @@ class DotNetDomain(Domain):
         DotNetIndex,
     ]
 
+    def __init__(self, *args, **kwargs):
+        super(DotNetDomain, self).__init__(*args, **kwargs)
+        # This overrides Sphinx's default of mapping a single role to a type.
+        # Multiple roles are allowed to reference a type, add them all here.
+        self._role2type = {}
+        self._type2role = {}
+        for name, obj in iteritems(self.object_types):
+            for roles in obj.roles:
+                if isinstance(roles, string_types):
+                    roles = [roles]
+                try:
+                    for rolename in roles:
+                        self._role2type.setdefault(rolename, []).append(name)
+                    if name not in self._type2role:
+                        self._type2role[name] = roles[0]
+                except (TypeError, IndexError):
+                    pass
+        self.objtypes_for_role = self._role2type.get
+        self.role_for_objtype = self._type2role.get
+
     def clear_doc(self, doc_name):
         objects = list(self.data['objects'].items())
         for (obj_type, obj_name), (obj_doc_name, _) in objects:
@@ -655,8 +677,8 @@ class DotNetDomain(Domain):
 
     def get_objects(self):
         for (obj_type, obj_name), (obj_doc, obj_doc_type) in self.data['objects'].items():
-            obj_short_type = self.directives[obj_doc_type].short_name
-            yield obj_name, obj_name, obj_short_type, obj_doc, obj_name, 1
+            obj_long_type = self.directives[obj_doc_type].long_name
+            yield obj_name, obj_name, obj_long_type, obj_doc, obj_name, 1
 
 
 def setup(app):
