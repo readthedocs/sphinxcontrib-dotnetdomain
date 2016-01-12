@@ -674,8 +674,8 @@ class DotNetDomain(Domain):
 
     def get_objects(self):
         for (obj_type, obj_name), (obj_doc, obj_doc_type) in self.data['objects'].items():
-            obj_short_type = self.directives[obj_doc_type].short_name
-            yield obj_name, obj_name, obj_short_type, obj_doc, obj_name, 1
+            obj_long_type = self.directives[obj_doc_type].long_name
+            yield obj_name, obj_name, obj_long_type, obj_doc, obj_name, 1
 
 
 def setup(app):
