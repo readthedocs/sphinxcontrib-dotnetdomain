@@ -575,6 +575,8 @@ class DotNetDomain(Domain):
 
     def __init__(self, *args, **kwargs):
         super(DotNetDomain, self).__init__(*args, **kwargs)
+        # This overrides Sphinx's default of mapping a single role to a type.
+        # Multiple roles are allowed to reference a type, add them all here.
         self._role2type = {}
         self._type2role = {}
         for name, obj in iteritems(self.object_types):
@@ -584,9 +586,10 @@ class DotNetDomain(Domain):
                 try:
                     for rolename in roles:
                         self._role2type.setdefault(rolename, []).append(name)
-                except TypeError:
+                    if name not in self._type2role:
+                        self._type2role[name] = roles[0]
+                except (TypeError, IndexError):
                     pass
-            self._type2role[name] = obj.roles[0] if obj.roles else ''
         self.objtypes_for_role = self._role2type.get
         self.role_for_objtype = self._type2role.get
 
