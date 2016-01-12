@@ -6,8 +6,10 @@ from textwrap import dedent
 from mock import Mock, patch
 
 from docutils.io import StringOutput
+from docutils import nodes
 
 from sphinx.builders.text import TextBuilder
+from sphinx.builders.xml import XMLBuilder
 from sphinx.application import Sphinx
 from sphinx.environment import SphinxFileInput
 
@@ -19,10 +21,11 @@ class MockSphinx(Sphinx):
 
     def __init__(self, *args, **kwargs):
         kwargs['warning'] = None
+        self.builder_class = kwargs.pop('builder_class', MockTestBuilder)
         super(MockSphinx, self).__init__(*args, **kwargs)
 
     def _init_builder(self, buildername):
-        self.builder = MockTestBuilder(self)
+        self.builder = self.builder_class(self)
         self.emit('builder-inited')
 
     def _mock_build(self, input_lines):
@@ -42,6 +45,32 @@ class MockTestBuilder(TextBuilder):
         super(MockTestBuilder, self).__init__(*args, **kwargs)
 
     def write_doc(self, docname, doctree):
+        self.current_docname = docname
+        destination = StringOutput(encoding='utf-8')
+        self.writer.write(doctree, destination)
+        self.output[docname] = self.writer.output
+
+
+class MockTestXMLBuilder(XMLBuilder):
+    '''Saves writer output locally, don't output to disk'''
+
+    def __init__(self, *args, **kwargs):
+        self.output = {}
+        super(MockTestXMLBuilder, self).__init__(*args, **kwargs)
+
+    def write_doc(self, docname, doctree):
+        doctree = doctree.deepcopy()
+
+        for node in doctree.traverse(nodes.Element):
+            for att, value in node.attributes.items():
+                if isinstance(value, tuple):
+                    node.attributes[att] = list(value)
+                value = node.attributes[att]
+                if isinstance(value, list):
+                    for i, val in enumerate(value):
+                        if isinstance(val, tuple):
+                            value[i] = list(val)
+
         self.current_docname = docname
         destination = StringOutput(encoding='utf-8')
         self.writer.write(doctree, destination)
