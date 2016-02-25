@@ -18,6 +18,7 @@ from sphinx.util.nodes import make_refnode
 from sphinx.util.docfields import Field, TypedField
 
 from docutils.parsers.rst import directives
+from docutils import nodes
 
 
 # Global regex parsing
@@ -214,34 +215,46 @@ class DotNetObject(ObjectDescription):
             # Update domain objects
             objects = self.env.domaindata['dn']['objects']
             try:
-                found_obj = objects[self.short_name, full_name]
-                (found_doc, _) = found_obj
+                found_obj = objects[full_name]
+                (found_doc, found_type) = found_obj
                 self.state_machine.reporter.warning(
                     ('duplicate object definition of {obj_type} {obj_name}'
                      'other instance in {path}'
-                     .format(obj_type=self.short_name, obj_name=full_name,
+                     .format(obj_type=found_type, obj_name=full_name,
                              path=self.env.doc2path(found_doc))),
                     line=self.lineno)
             except KeyError:
                 pass
             finally:
-                objects[self.short_name, full_name] = (self.env.docname,
-                                                       self.objtype)
+                objects[full_name] = (self.env.docname, self.objtype)
 
-        index_text = self.get_index_text(obj_name, name_obj)
+        index_text = self.get_index_text(None, name_obj)
         if index_text:
             self.indexnode['entries'].append(('single', index_text, full_name,
                                               ''))
 
-    def get_index_text(self, obj_name, name_obj):
+    def get_index_text(self, prefix, name_obj):
         '''Produce index text by directive attributes'''
-        (name, _) = name_obj
-        return '{obj_name} ({name} {obj_type})'.format(
-            obj_name=obj_name, name=name, obj_type=self.long_name)
+        (name, obj_type) = name_obj
+        msg = '{name} ({obj_type})'
+        parts = {
+            'name': name,
+            'prefix': prefix,
+            'obj_type': self.long_name,
+        }
+        try:
+            (obj_ns, obj_name) = name.rsplit('.', 1)
+            parts['name'] = obj_name
+            parts['namespace'] = obj_ns
+            msg = '{name} ({namespace} {obj_type})'
+        except ValueError:
+            pass
+
+        return msg.format(**parts)
 
     @classmethod
     def get_type(cls):
-        return ObjType(l_(cls.long_name), (cls.short_name, cls.long_name))
+        return ObjType(l_(cls.long_name), cls.short_name, cls.long_name, 'obj')
 
 
 class DotNetObjectNested(DotNetObject):
@@ -310,18 +323,48 @@ class DotNetObjectNested(DotNetObject):
             self.env.ref_context['dn:prefix'] = None
 
 
+class DotNetXRefMixin(object):
+
+    """Add .NET handling for `.` and `~` reference operators"""
+
+    def make_xref(self, rolename, domain, target, innernode=nodes.emphasis,
+                  contnode=None):
+        result = super(DotNetXRefMixin, self).make_xref(
+            rolename, domain, target, innernode, contnode)
+        result['refspecific'] = True
+        if target.startswith(('.', '~')):
+            prefix, result['reftarget'] = target[0], target[1:]
+            if prefix == '.':
+                text = target[1:]
+            elif prefix == '~':
+                text = target.split('.')[-1]
+            for node in result.traverse(nodes.Text):
+                node.parent[node.parent.index(node)] = nodes.Text(text)
+                break
+        return result
+
+
+class DotNetField(DotNetXRefMixin, Field):
+    pass
+
+
+class DotNetTypedField(DotNetXRefMixin, TypedField):
+    pass
+
+
 class DotNetCallable(DotNetObject):
 
     '''An object that is callable with arguments'''
     has_arguments = True
     doc_field_types = [
-        TypedField('arguments', label=l_('Arguments'),
-                   names=('argument', 'arg', 'parameter', 'param'),
-                   typerolename='func', typenames=('paramtype', 'type')),
+        DotNetTypedField('arguments', label=l_('Arguments'),
+                         names=('argument', 'arg', 'parameter', 'param'),
+                         typerolename='obj', typenames=('paramtype', 'type'),
+                         can_collapse=True),
         Field('returnvalue', label=l_('Returns'), has_arg=False,
               names=('returns', 'return')),
-        Field('returntype', label=l_('Return type'), has_arg=False,
-              names=('rtype',)),
+        DotNetField('returntype', label=l_('Return type'), has_arg=False,
+                    names=('rtype',), bodyrolename='obj'),
     ]
 
     signature_pattern = r'''
@@ -460,7 +503,6 @@ class DotNetXRefRole(AnyXRefRole):
     '''XRef role to handle special .NET cases'''
 
     def __init__(self, *args, **kwargs):
-        self.alternate_role = kwargs.pop('alternate_role', False)
         super(DotNetXRefRole, self).__init__(*args, **kwargs)
 
     def process_link(self, env, refnode, has_explicit_title, title, target):
@@ -474,13 +516,25 @@ class DotNetXRefRole(AnyXRefRole):
 
         This also uses :py:cls:`AnyXRefRole` to add `ref_context` onto the
         refnode. Add data there that you need it on refnodes.
+
+        This method also resolves special reference operators ``~`` and ``.``
         '''
         super(DotNetXRefRole, self).process_link(env, refnode,
                                                  has_explicit_title, title,
                                                  target)
-        if title != target:
-            target = title = '{title}<{target}>'.format(title=title,
-                                                        target=target)
+        if not has_explicit_title:
+            # If the first character is a tilde, don't display the prefix
+            title = title.lstrip('.')
+            target = target.lstrip('~')
+            if title[0:1] == '~':
+                title = title[1:]
+                dot = title.rfind('.')
+                if dot != -1:
+                    title = title[dot + 1:]
+        else:
+            if title != target:
+                target = title = '{title}<{target}>'.format(title=title,
+                                                            target=target)
         return title, target
 
 
@@ -515,7 +569,7 @@ class DotNetIndex(Index):
         content = {}
         objects = sorted(self.domain.data['objects'].items(),
                          key=lambda x: x[1][0].lower())
-        for (obj_type, obj_name), (obj_doc_name, _) in objects:
+        for obj_name, (obj_doc_name, obj_type) in objects:
             if doc_names and obj_doc_name not in doc_names:
                 continue
             if obj_type != 'namespace':
@@ -561,12 +615,14 @@ class DotNetDomain(Domain):
     roles = dict(chain(
         ((cls.short_name, DotNetXRefRole())
          for cls in _domain_types),
-        ((cls.long_name, DotNetXRefRole(alternate_role=True))
-         for cls in _domain_types)
+        ((cls.long_name, DotNetXRefRole())
+         for cls in _domain_types),
+        ((extra_key, DotNetXRefRole())
+         for extra_key in ['obj'])
     ))
 
     initial_data = {
-        'objects': {},  # (ref_type, fullname) -> (docname, obj_type)
+        'objects': {},  # fullname -> (docname, obj_type)
     }
 
     indices = [
@@ -575,29 +631,23 @@ class DotNetDomain(Domain):
 
     def __init__(self, *args, **kwargs):
         super(DotNetDomain, self).__init__(*args, **kwargs)
-        # This overrides Sphinx's default of mapping a single role to a type.
-        # Multiple roles are allowed to reference a type, add them all here.
         self._role2type = {}
-        self._type2role = {}
+        name_mapping = dict((cls.long_name, cls.short_name)
+                            for cls in _domain_types)
         for name, obj in iteritems(self.object_types):
-            for roles in obj.roles:
-                if isinstance(roles, string_types):
-                    roles = [roles]
-                try:
-                    for rolename in roles:
-                        self._role2type.setdefault(rolename, []).append(name)
-                    if name not in self._type2role:
-                        self._type2role[name] = roles[0]
-                except (TypeError, IndexError):
-                    pass
+            for role in obj.roles:
+                if name in name_mapping:
+                    (self._role2type
+                     .setdefault(role, [])
+                     .append(name_mapping[name]))
+                self._role2type.setdefault(role, []).append(name)
         self.objtypes_for_role = self._role2type.get
-        self.role_for_objtype = self._type2role.get
 
     def clear_doc(self, doc_name):
         objects = list(self.data['objects'].items())
-        for (obj_type, obj_name), (obj_doc_name, _) in objects:
+        for obj_name, (obj_doc_name, _) in objects:
             if doc_name == obj_doc_name:
-                del self.data['objects'][obj_type, obj_name]
+                del self.data['objects'][obj_name]
 
     def find_obj(self, env, prefix, name, obj_type, searchorder=0):
         '''Find object reference
@@ -615,31 +665,37 @@ class DotNetDomain(Domain):
         if not name:
             return []
 
-        for cls in _domain_types:
-            if obj_type == cls.long_name:
-                obj_type = cls.short_name
-
-        if obj_type == 'namespace':
-            obj_type = 'ns'
+        object_types = list(self.object_types)
+        if obj_type is not None:
+            object_types = self.objtypes_for_role(obj_type)
 
         objects = self.data['objects']
         newname = None
+        fullname = name
         if prefix is not None:
             fullname = '.'.join([prefix, name])
 
         if searchorder == 1:
-            if prefix and (obj_type, fullname) in objects:
+            if prefix and fullname in objects and objects[fullname][1] in object_types:
                 newname = fullname
+            elif name in objects and objects[name][1] in object_types:
+                newname = name
             else:
-                newname = name
+                try:
+                    matches = [obj_name for obj_name in objects
+                            if obj_name.endswith('.' + name)]
+                    newname = matches.pop()
+                except IndexError:
+                    pass
         else:
-            if (obj_type, name) in objects:
+            if name in objects:
                 newname = name
-            elif prefix and (obj_type, fullname) in objects:
+            elif prefix and fullname in objects:
                 newname = fullname
 
-        return (obj_type, newname), objects.get((obj_type, newname),
-                                                (None, None))
+        if newname is None:
+            return None
+        return newname, objects.get(newname, (None, None))
 
     def resolve_xref(self, env, doc, builder, obj_type, target, node,
                      contnode):
@@ -649,8 +705,8 @@ class DotNetDomain(Domain):
         found = self.find_obj(env, prefix, target, obj_type, searchorder)
         try:
             # pylint: disable=unbalanced-tuple-unpacking
-            (obj_type, obj_name), obj = found
-            (obj_doc_name, _) = obj
+            obj_name, obj = found
+            (obj_doc_name, obj_type) = obj
             if obj_name is None or obj_doc_name is None:
                 return None
             return make_refnode(builder, doc, obj_doc_name, obj_name, contnode,
@@ -659,24 +715,23 @@ class DotNetDomain(Domain):
             return None
 
     def resolve_any_xref(self, env, doc, builder, target, node, contnode):
-        """Using main domain roles, look for defined objects
+        """Look for any references, without object type
 
-        This method is called when the ``:any:`` reference lookup is used. The
-        default implementation uses all of the roles defined on the domain, so
-        alternate roles are used here to only use the main roles for object
-        lookups.
+        This always searches in "refspecific" mode
         """
+        prefix = node.get('dn:prefix')
         results = []
-        for role in self.roles:
-            if not self.roles[role].alternate_role:
-                found = self.resolve_xref(env, doc, builder, role,
-                                          target, node, contnode)
-                if found is not None:
-                    results.append((role, found))
+
+        match = self.find_obj(env, prefix, target, None, 1)
+        if match is not None:
+            (name, obj) = match
+            results.append(('dn:' + self.role_for_objtype(obj[1]),
+                            make_refnode(builder, doc, obj[0], name, contnode,
+                                         name)))
         return results
 
     def get_objects(self):
-        for (obj_type, obj_name), (obj_doc, obj_doc_type) in self.data['objects'].items():
+        for obj_name, (obj_doc, obj_doc_type) in self.data['objects'].items():
             obj_long_type = self.directives[obj_doc_type].long_name
             yield obj_name, obj_name, obj_long_type, obj_doc, obj_name, 1
 

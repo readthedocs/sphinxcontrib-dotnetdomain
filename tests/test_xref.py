@@ -163,7 +163,7 @@ class XRefTests(SphinxTestCase):
                 type_short)
             self.assertEqual(
                 ret,
-                ((type_short, '{0}Foo'.format(type_long.title())),
+                ('{0}Foo'.format(type_long.title()),
                  ('index', type_long))
             )
 
@@ -265,7 +265,9 @@ class XRefTests(SphinxTestCase):
     def test_xref_collision_type_difference(self):
         '''Cross reference but with type differences
 
-        On differing types, colliding names should both be addressable.
+        On a type that is defined more than once, the last defined object will
+        be the one that is found by object searches. The whole group will be
+        targetted by reference links however
         '''
         self.app._mock_build(
             '''
@@ -279,8 +281,6 @@ class XRefTests(SphinxTestCase):
                 .. dn:field:: Nested()
                 .. dn:property:: Nested()
             ''')
-        self.assertXRef('Nested', prefix='ValidClass', obj_type='method')
-        self.assertXRef('Nested', prefix='ValidClass', obj_type='field')
         self.assertXRef('Nested', prefix='ValidClass', obj_type='property')
 
     def test_xref_collision_multiple_namespaces(self):
