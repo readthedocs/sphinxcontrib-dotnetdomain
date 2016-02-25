@@ -1,12 +1,12 @@
-'''Sphinx .NET Domain
+"""Sphinx .NET Domain
 
 API documentation support for .NET langauges
-'''
+"""
 
 import re
 from itertools import chain
 
-from six import string_types, iteritems
+from six import iteritems
 
 from sphinx import addnodes
 from sphinx.domains import Domain, ObjType, Index
@@ -38,7 +38,7 @@ _re_parts['name'] = r'[\w\_\-]+?%(type)s' % _re_parts
 
 class DotNetSignature(object):
 
-    '''Signature parsing for .NET directives
+    """Signature parsing for .NET directives
 
     Attributes
         prefix
@@ -49,7 +49,7 @@ class DotNetSignature(object):
 
         arguments
             List of arguments
-    '''
+    """
 
     def __init__(self, prefix=None, member=None, arguments=None):
         self.prefix = prefix
@@ -57,7 +57,7 @@ class DotNetSignature(object):
         self.arguments = arguments
 
     def full_name(self):
-        '''Return full name of member'''
+        """Return full name of member"""
         if self.prefix is not None:
             return '.'.join([self.prefix, self.member])
         return self.member
@@ -68,7 +68,7 @@ class DotNetSignature(object):
 
 class DotNetObject(ObjectDescription):
 
-    '''Description of a .NET construct object.
+    """Description of a .NET construct object.
 
     Class variables
     ---------------
@@ -88,7 +88,7 @@ class DotNetObject(ObjectDescription):
 
         long_name
             Long cross reference and indexed data name for object
-    '''
+    """
 
     has_arguments = False
     display_prefix = None
@@ -106,7 +106,7 @@ class DotNetObject(ObjectDescription):
 
     @classmethod
     def parse_signature(cls, signature):
-        '''Parse signature declartion string
+        """Parse signature declartion string
 
         Uses :py:attr:`signature_pattern` to parse out pieces of constraint
         signatures. Pattern should provide the following named groups:
@@ -122,7 +122,7 @@ class DotNetObject(ObjectDescription):
 
         :param signature: construct signature
         :type signature: string
-        '''
+        """
         assert cls.signature_pattern is not None
         pattern = re.compile(cls.signature_pattern, re.VERBOSE)
         match = pattern.match(signature)
@@ -139,7 +139,7 @@ class DotNetObject(ObjectDescription):
         raise ValueError('Could not parse signature: {0}'.format(signature))
 
     def handle_signature(self, sig_input, signode):
-        '''Parses out pieces from construct signatures
+        """Parses out pieces from construct signatures
 
         Parses out prefix and argument list from construct definition. This is
         assuming that the .NET languages this will support will be in a common
@@ -153,7 +153,7 @@ class DotNetObject(ObjectDescription):
         Returns
             Altered :py:data:`signode` with attributes corrected for rST
             nesting/etc
-        '''
+        """
         try:
             sig = self.parse_signature(sig_input.strip())
         except ValueError:
@@ -197,13 +197,11 @@ class DotNetObject(ObjectDescription):
         return sig.full_name(), sig.prefix
 
     def add_target_and_index(self, name_obj, sig, signode):
-        '''Add objects to the domain list of objects
+        """Add objects to the domain list of objects
 
         This uses the directive short name along with the full object name to
         create objects and nodes that are type and name unique.
-        '''
-        obj_name = self.options.get('object',
-                                    self.env.ref_context.get('dn:object'))
+        """
         full_name = name_obj[0]
         target_name = '{0}-{1}'.format(self.short_name, full_name)
         if target_name not in self.state.document.ids:
@@ -234,8 +232,8 @@ class DotNetObject(ObjectDescription):
                                               ''))
 
     def get_index_text(self, prefix, name_obj):
-        '''Produce index text by directive attributes'''
-        (name, obj_type) = name_obj
+        """Produce index text by directive attributes"""
+        (name, _) = name_obj
         msg = '{name} ({obj_type})'
         parts = {
             'name': name,
@@ -259,7 +257,7 @@ class DotNetObject(ObjectDescription):
 
 class DotNetObjectNested(DotNetObject):
 
-    '''Nestable object'''
+    """Nestable object"""
 
     option_spec = dict(
         item for obj in [DotNetObject.option_spec,
@@ -272,23 +270,23 @@ class DotNetObjectNested(DotNetObject):
     ''' % _re_parts
 
     def run(self):
-        '''If element is considered hidden, drop the desc_signature node
+        """If element is considered hidden, drop the desc_signature node
 
         The default handling of signatures by :py:cls:`ObjectDescription`
         returns a list of nodes with the signature nodes. We are going to remove
         them if this is a hidden declaration.
-        '''
+        """
         nodes = super(DotNetObjectNested, self).run()
         if 'hidden' in self.options:
             for node in nodes:
                 if isinstance(node, addnodes.desc):
                     for (m, child) in enumerate(node.children):
                         if isinstance(child, addnodes.desc_signature):
-                            _ = node.children.pop(m)
+                            node.children.pop(m)
         return nodes
 
     def before_content(self):
-        '''Build up prefix history for nested elements
+        """Build up prefix history for nested elements
 
         The following keys are used in :py:attr:`self.env.ref_context`:
 
@@ -301,10 +299,10 @@ class DotNetObjectNested(DotNetObject):
             dn:prefix
                 Current prefix. This should reflect the last element in the
                 prefix history
-        '''
+        """
         super(DotNetObjectNested, self).before_content()
         if self.names:
-            (parent, prefix) = self.names.pop()
+            (_, prefix) = self.names.pop()
             try:
                 self.env.ref_context['dn:prefixes'].append(prefix)
             except (AttributeError, KeyError):
@@ -344,7 +342,7 @@ class DotNetXRefMixin(object):
         return result
 
 
-class DotNetField(DotNetXRefMixin, Field):
+class DotNetBasicField(DotNetXRefMixin, Field):
     pass
 
 
@@ -354,7 +352,8 @@ class DotNetTypedField(DotNetXRefMixin, TypedField):
 
 class DotNetCallable(DotNetObject):
 
-    '''An object that is callable with arguments'''
+    """An object that is callable with arguments"""
+
     has_arguments = True
     doc_field_types = [
         DotNetTypedField('arguments', label=l_('Arguments'),
@@ -363,8 +362,8 @@ class DotNetCallable(DotNetObject):
                          can_collapse=True),
         Field('returnvalue', label=l_('Returns'), has_arg=False,
               names=('returns', 'return')),
-        DotNetField('returntype', label=l_('Return type'), has_arg=False,
-                    names=('rtype',), bodyrolename='obj'),
+        DotNetBasicField('returntype', label=l_('Return type'), has_arg=False,
+                         names=('rtype',), bodyrolename='obj'),
     ]
 
     signature_pattern = r'''
@@ -430,7 +429,8 @@ class DotNetConstructor(DotNetCallable):
 
 
 class DotNetProperty(DotNetCallable):
-    '''Property object definition
+
+    """Property object definition
 
     Properties can be defined with the following options:
 
@@ -444,7 +444,8 @@ class DotNetProperty(DotNetCallable):
 
         .. dn:property:: Example()
             :getter:
-    '''
+    """
+
     class_object = True
     short_name = 'prop'
     long_name = 'property'
@@ -457,7 +458,8 @@ class DotNetProperty(DotNetCallable):
 
 
 class DotNetField(DotNetCallable):
-    '''Field object definition
+
+    """Field object definition
 
     Fields can be defined with the following options:
 
@@ -472,7 +474,8 @@ class DotNetField(DotNetCallable):
         .. dn:field:: Example
             :adder:
             :remover:
-    '''
+    """
+
     class_object = True
     short_name = 'field'
     long_name = 'field'
@@ -500,13 +503,13 @@ class DotNetOperator(DotNetCallable):
 # Cross referencing
 class DotNetXRefRole(AnyXRefRole):
 
-    '''XRef role to handle special .NET cases'''
+    """XRef role to handle special .NET cases"""
 
     def __init__(self, *args, **kwargs):
         super(DotNetXRefRole, self).__init__(*args, **kwargs)
 
     def process_link(self, env, refnode, has_explicit_title, title, target):
-        '''This handles some special cases for reference links in .NET
+        """This handles some special cases for reference links in .NET
 
         First, the standard Sphinx reference syntax of ``:ref:`Title<Link>```,
         where a reference to ``Link`` is created with title ``Title``, causes
@@ -518,7 +521,7 @@ class DotNetXRefRole(AnyXRefRole):
         refnode. Add data there that you need it on refnodes.
 
         This method also resolves special reference operators ``~`` and ``.``
-        '''
+        """
         super(DotNetXRefRole, self).process_link(env, refnode,
                                                  has_explicit_title, title,
                                                  target)
@@ -557,9 +560,7 @@ _domain_types = [
 
 class DotNetIndex(Index):
 
-    """
-    Index subclass to provide the .NET module index.
-    """
+    """Index subclass to provide the .NET module index"""
 
     name = 'modindex'
     localname = l_('.NET Module Index')
@@ -601,7 +602,7 @@ class DotNetIndex(Index):
 
 class DotNetDomain(Domain):
 
-    '''.NET language domain.'''
+    """.NET language domain."""
 
     name = 'dn'
     label = '.NET'
@@ -650,14 +651,14 @@ class DotNetDomain(Domain):
                 del self.data['objects'][obj_name]
 
     def find_obj(self, env, prefix, name, obj_type, searchorder=0):
-        '''Find object reference
+        """Find object reference
 
         :param env: Build environment
         :param prefix: Object prefix
         :param name: Object name
         :param obj_type: Object type
         :param searchorder: Search for exact match
-        '''
+        """
         # Skip parens
         if name[-2:] == '()':
             name = name[:-2]
@@ -683,7 +684,7 @@ class DotNetDomain(Domain):
             else:
                 try:
                     matches = [obj_name for obj_name in objects
-                            if obj_name.endswith('.' + name)]
+                               if obj_name.endswith('.' + name)]
                     newname = matches.pop()
                 except IndexError:
                     pass
