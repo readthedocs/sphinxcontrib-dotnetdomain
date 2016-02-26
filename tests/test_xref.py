@@ -1,6 +1,6 @@
 import unittest
 
-from util import SphinxTestCase
+from util import SphinxTestCase, MockTestXMLBuilder
 
 
 class XRefTests(SphinxTestCase):
@@ -416,3 +416,27 @@ class XRefTests(SphinxTestCase):
         self.assertXRef('GoofyClass<T>', obj_type='class')
         self.assertXRef('GoofyClass<T,T>', obj_type='class')
         self.assertXRef('GoofyClass<T,T,T>', obj_type='class')
+
+    def test_basic_xref(self):
+        '''Basic cross references, not nested'''
+        self.app.builder = MockTestXMLBuilder(self.app)
+        self.app._mock_build(
+            '''
+            .. dn:namespace:: ValidNamespace
+
+                .. dn:class:: ValidClass
+
+                    Test comment
+
+            :dn:class:`~ValidNamespace.ValidClass`
+            ''')
+        self.assertXRef('ValidNamespace.ValidClass', obj_type='class',
+                        obj_ref_type='class')
+        self.assertIn(
+            ('<reference internal="True" '
+             'refid="ValidNamespace.ValidClass" '
+             'reftitle="ValidNamespace.ValidClass">'
+             '<literal classes="xref dn dn-class">ValidClass</literal>'
+             '</reference>'),
+            self.app.builder.output['index'],
+        )
