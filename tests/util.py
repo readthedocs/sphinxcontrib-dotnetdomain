@@ -141,7 +141,7 @@ class SphinxTestCase(unittest.TestCase):
         obj_ref_type = self.app.env.domains['dn'].directives[obj_type].short_name
         try:
             objects = self.app.env.domaindata[domain]['objects']
-            (obj_doc_name, _) = objects[obj_ref_type, obj_name]
+            (obj_doc_name, _) = objects[obj_name]
             self.assertEqual(
                 doc_name, obj_doc_name,
                 'Reference docname mismatch: expected {0}, actual {1}'
@@ -196,7 +196,7 @@ class SphinxTestCase(unittest.TestCase):
             ret_name = name
             if prefix is not None:
                 ret_name = '.'.join([prefix, name])
-        ((_, found_name), found_meta) = found
+        (found_name, found_meta) = found
         self.assertIsNotNone(found_name,
                              'XRef {0} not found'.format(ret_name))
         (found_doc, found_type) = found_meta

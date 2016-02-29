@@ -1,6 +1,6 @@
 import unittest
 
-from util import SphinxTestCase
+from util import SphinxTestCase, MockTestXMLBuilder
 
 
 class XRefTests(SphinxTestCase):
@@ -163,7 +163,7 @@ class XRefTests(SphinxTestCase):
                 type_short)
             self.assertEqual(
                 ret,
-                ((type_short, '{0}Foo'.format(type_long.title())),
+                ('{0}Foo'.format(type_long.title()),
                  ('index', type_long))
             )
 
@@ -265,7 +265,9 @@ class XRefTests(SphinxTestCase):
     def test_xref_collision_type_difference(self):
         '''Cross reference but with type differences
 
-        On differing types, colliding names should both be addressable.
+        On a type that is defined more than once, the last defined object will
+        be the one that is found by object searches. The whole group will be
+        targetted by reference links however
         '''
         self.app._mock_build(
             '''
@@ -279,8 +281,6 @@ class XRefTests(SphinxTestCase):
                 .. dn:field:: Nested()
                 .. dn:property:: Nested()
             ''')
-        self.assertXRef('Nested', prefix='ValidClass', obj_type='method')
-        self.assertXRef('Nested', prefix='ValidClass', obj_type='field')
         self.assertXRef('Nested', prefix='ValidClass', obj_type='property')
 
     def test_xref_collision_multiple_namespaces(self):
@@ -416,3 +416,27 @@ class XRefTests(SphinxTestCase):
         self.assertXRef('GoofyClass<T>', obj_type='class')
         self.assertXRef('GoofyClass<T,T>', obj_type='class')
         self.assertXRef('GoofyClass<T,T,T>', obj_type='class')
+
+    def test_basic_xref(self):
+        '''Basic cross references, not nested'''
+        self.app.builder = MockTestXMLBuilder(self.app)
+        self.app._mock_build(
+            '''
+            .. dn:namespace:: ValidNamespace
+
+                .. dn:class:: ValidClass
+
+                    Test comment
+
+            :dn:class:`~ValidNamespace.ValidClass`
+            ''')
+        self.assertXRef('ValidNamespace.ValidClass', obj_type='class',
+                        obj_ref_type='class')
+        self.assertIn(
+            ('<reference internal="True" '
+             'refid="ValidNamespace.ValidClass" '
+             'reftitle="ValidNamespace.ValidClass">'
+             '<literal classes="xref dn dn-class">ValidClass</literal>'
+             '</reference>'),
+            self.app.builder.output['index'],
+        )

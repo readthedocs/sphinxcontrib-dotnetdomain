@@ -7,9 +7,9 @@ ignore-paths:
   - docs
 
 pep8:
-    full: true
-    options:
-        max-line-length: 100
+  full: true
+  options:
+    max-line-length: 100
 
 pylint:
   max-line-length: 100
@@ -19,3 +19,5 @@ mccabe:
 
 pep257:
   run: false
+  disable:
+    - D211
