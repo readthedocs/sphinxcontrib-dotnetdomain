@@ -38,7 +38,7 @@ _re_parts['name'] = r'[\w\_\-]+?%(type)s' % _re_parts
 
 class DotNetSignature(object):
 
-    """Signature parsing for .NET dieectives
+    """Signature parsing for .NET directives
 
     Attributes
         prefix
