@@ -325,21 +325,68 @@ class DotNetXRefMixin(object):
 
     """Add .NET handling for `.` and `~` reference operators"""
 
-    def make_xref(self, rolename, domain, target, innernode=nodes.emphasis,
-                  contnode=None):
-        result = super(DotNetXRefMixin, self).make_xref(
-            rolename, domain, target, innernode, contnode)
-        result['refspecific'] = True
-        if target.startswith(('.', '~')):
-            prefix, result['reftarget'] = target[0], target[1:]
-            if prefix == '.':
-                text = target[1:]
-            elif prefix == '~':
-                text = target.split('.')[-1]
-            for node in result.traverse(nodes.Text):
-                node.parent[node.parent.index(node)] = nodes.Text(text)
+    nested_pattern = re.compile(r'^(?P<parent>[^{]+?)\{(?P<inner>.+)\}$')
+    alias_pattern = re.compile(r'^(?P<target>[^{]+?)\<(?P<alias>.+)\>$')
+
+    def split_refs(self, target):
+
+        def alias_target(ref):
+            found = self.alias_pattern.match(ref)
+            if found:
+                return (found.group('target'), found.group('alias'))
+            return (ref, None)
+
+        refs = []
+        current = target
+        while True:
+            found = self.nested_pattern.match(current)
+            if not found:
+                refs.append(alias_target(current))
                 break
-        return result
+            current = found.group('inner')
+            refs.append(alias_target(found.group('parent')))
+        return refs
+
+    def make_xref(self, rolename, domain, target_name, innernode=nodes.emphasis,
+                  contnode=None):
+        if not rolename:
+            return contnode or innernode(target_name, target_name)
+
+        field_node = None
+        refs = self.split_refs(target_name)
+        refs.reverse()
+        for (target_name, target_alias) in refs:
+            if not target_alias and target_name.startswith(('.', '~')):
+                prefix, target_name = target_name[0], target_name[1:]
+                if prefix == '.':
+                    target_alias = target_name[1:]
+                elif prefix == '~':
+                    target_alias = target_name.split('.')[-1]
+            if target_alias is None:
+                target_alias = target_name
+            ref_node = addnodes.pending_xref(
+                '',
+                refdomain=domain,
+                refexplicit=False,
+                reftype=rolename,
+                reftarget=target_alias,
+                refspecific=True,
+            )
+            ref_node += nodes.Text(target_name, target_name)
+            if field_node is None:
+                field_node = nodes.inline()
+                field_node += ref_node
+            else:
+                inner_node = field_node
+                field_node = nodes.inline()
+                field_node += [
+                    ref_node,
+                    nodes.Text('<', '<'),
+                    inner_node,
+                    nodes.Text('>', '>'),
+                ]
+
+        return innernode('', '', field_node)
 
 
 class DotNetBasicField(DotNetXRefMixin, Field):
@@ -522,11 +569,12 @@ class DotNetXRefRole(AnyXRefRole):
 
         This method also resolves special reference operators ``~`` and ``.``
         """
-        super(DotNetXRefRole, self).process_link(env, refnode,
-                                                 has_explicit_title, title,
-                                                 target)
+        result = super(DotNetXRefRole, self).process_link(env, refnode,
+                                                          has_explicit_title,
+                                                          title, target)
+        (title, target) = result
         if not has_explicit_title:
-            # If the first character is a tilde, don't display the prefix
+            # If the first character is a tilde, don't display the parent name
             title = title.lstrip('.')
             target = target.lstrip('~')
             if title[0:1] == '~':
