@@ -298,6 +298,8 @@ class ReferenceDefinitionTests(SphinxTestCase):
         self.assertRef('GetProperty', 'property')
         self.assertRef('SetProperty', 'property')
         self.assertRef('Property', 'property')
+        self.assertNotIn('Property()', self.app.builder.output['index'])
+        self.assertIn('Property', self.app.builder.output['index'])
 
     def test_field_options(self):
         '''Field directive options'''
