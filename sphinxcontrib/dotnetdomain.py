@@ -509,6 +509,7 @@ class DotNetProperty(DotNetCallable):
     class_object = True
     short_name = 'prop'
     long_name = 'property'
+    has_arguments = False
 
     option_spec = dict(
         item for obj in [DotNetCallable.option_spec,
