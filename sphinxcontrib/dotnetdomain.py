@@ -8,7 +8,7 @@ from itertools import chain
 
 from six import iteritems
 
-from sphinx import addnodes
+from sphinx import addnodes, version_info as sphinx_version_info
 from sphinx.domains import Domain, ObjType, Index
 from sphinx.locale import l_
 from sphinx.directives import ObjectDescription
@@ -20,6 +20,8 @@ from sphinx.util.docfields import Field, TypedField
 from docutils.parsers.rst import directives
 from docutils import nodes
 
+
+SPHINX_VERSION_14 = (sphinx_version_info >= (1, 4))
 
 # Global regex parsing
 _re_parts = {}
@@ -228,8 +230,10 @@ class DotNetObject(ObjectDescription):
 
         index_text = self.get_index_text(None, name_obj)
         if index_text:
-            self.indexnode['entries'].append(('single', index_text, full_name,
-                                              ''))
+            entry = ('single', index_text, full_name, '')
+            if SPHINX_VERSION_14:
+                entry = ('single', index_text, full_name, '', None)
+            self.indexnode['entries'].append(entry)
 
     def get_index_text(self, prefix, name_obj):
         """Produce index text by directive attributes"""
