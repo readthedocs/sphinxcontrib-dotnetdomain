@@ -158,3 +158,9 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(sig.member, 'XmlDocCommentAttributeName')
         time_end = time.time()
         self.assertTrue((time_end - time_start) < 2)
+
+    def test_indexers(self):
+        """Indexer types"""
+        sig = DotNetCallable.parse_signature('ClassLibrary3.TagHelperAttributeList.Item[System.String]')
+        self.assertEqual(sig.prefix, 'ClassLibrary3.TagHelperAttributeList')
+        self.assertEqual(sig.member, 'Item[System.String]')

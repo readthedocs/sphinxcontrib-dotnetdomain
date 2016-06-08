@@ -25,17 +25,26 @@ SPHINX_VERSION_14 = (sphinx_version_info >= (1, 4))
 
 # Global regex parsing
 _re_parts = {}
-_re_parts['type_dimension'] = r'(?:\`\d+)?(?:\`\`\d+)?'
-_re_parts['type_generic'] = r'''
-    (?:[\<\{]
-        (?:[\w]+|[\<\{].+?[\>\}])
-        (?:,\s?
-            (?:[\w]+|[\<\{].+?[\>\}])
-        )*?
-    [\>\}])(?![\<\{][^\>\}]+[\>\}])
+_re_parts['type_dimension'] = r'''
+    (?:\`\d+)?      # non-greedy search for dimension syntax: `1
+    (?:\`\`\d+)?    # non-greedy search for dimension syntax: ``1
 '''
+_re_parts['type_generic'] = r'''
+    (?:[\<\{]                           # open bracket for generic
+        (?:[\w]+|[\<\{].+?[\>\}])       # first parameter type, word or generic
+        (?:,\s?                         # group of next parameters
+            (?:[\w]+|[\<\{].+?[\>\}])   # parameter type, word or generic
+        )*?                             # non-greedy search for unlimited groups
+    [\>\}])                             # close bracket for generic
+    (?![\<\{][^\>\}]+[\>\}])
+'''
+# Parameter types should be either a dimension or generic syntax
 _re_parts['type'] = r'(?:%(type_dimension)s|%(type_generic)s)' % _re_parts
-_re_parts['name'] = r'[\w\_\-]+?%(type)s' % _re_parts
+# Indexer type syntax is slightly different than generic, parse separately for a
+# normal type declaration in an indexer declaration
+_re_parts['type_indexer'] = r'(\[[\w\_\-\.]+?%(type)s\])?' % _re_parts
+# Look for either the type declaration or and indexer declaration
+_re_parts['name'] = r'[\w\_\-]+?(?:%(type)s|%(type_indexer)s)' % _re_parts
 
 
 class DotNetSignature(object):
