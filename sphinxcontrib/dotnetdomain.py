@@ -33,7 +33,8 @@ _re_parts['type_generic'] = r'''
     [\>\}])(?![\<\{][^\>\}]+[\>\}])
 '''
 _re_parts['type'] = r'(?:%(type_dimension)s|%(type_generic)s)' % _re_parts
-_re_parts['name'] = r'[\w\_\-]+?%(type)s' % _re_parts
+_re_parts['type_indexer'] = r'(\[[\w\_\-\.]+?%(type)s\])?' % _re_parts
+_re_parts['name'] = r'[\w\_\-]+?(?:%(type)s|%(type_indexer)s)' % _re_parts
 
 
 class DotNetSignature(object):
