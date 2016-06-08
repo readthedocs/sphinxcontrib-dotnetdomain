@@ -1,10 +1,13 @@
 language: python
 python:
   - 2.7
+  - 3.5
 sudo: true
 env:
-  - TOX_ENV=py27
-  - TOX_ENV=py34
+  - TOX_ENV=py27-sphinx13
+  - TOX_ENV=py27-sphinx14
+  - TOX_ENV=py35-sphinx13
+  - TOX_ENV=py35-sphinx14
   - TOX_ENV=lint
   - TOX_ENV=docs
 install:
@@ -14,6 +17,6 @@ script:
 notifications:
   slack:
     rooms:
-      - readthedocs:y3hjODOi7EIz1JAbD1Zb41sz#general
+      - readthedocs:y3hjODOi7EIz1JAbD1Zb41sz#random
     on_success: change
     on_failure: always
