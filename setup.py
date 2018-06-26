@@ -33,7 +33,7 @@ setup(
     platforms='any',
     packages=find_packages(),
     include_package_data=True,
-    install_requires=['Sphinx>=0.6'],
+    install_requires=['Sphinx<1.7'],
     namespace_packages=['sphinxcontrib'],
     test_suite='nose.collector',
     tests_require=['nose', 'mock'],
