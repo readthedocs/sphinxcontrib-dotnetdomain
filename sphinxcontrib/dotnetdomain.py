@@ -207,13 +207,13 @@ class DotNetObject(ObjectDescription):
             return sig.full_name(), sig.full_name()
         return sig.full_name(), sig.prefix
 
-    def add_target_and_index(self, name_obj, sig, signode):
+    def add_target_and_index(self, name, sig, signode):
         """Add objects to the domain list of objects
 
         This uses the directive short name along with the full object name to
         create objects and nodes that are type and name unique.
         """
-        full_name = name_obj[0]
+        full_name = name[0]
         target_name = '{0}-{1}'.format(self.short_name, full_name)
         if target_name not in self.state.document.ids:
             signode['names'].append(target_name)
@@ -237,7 +237,7 @@ class DotNetObject(ObjectDescription):
             finally:
                 objects[full_name] = (self.env.docname, self.objtype)
 
-        index_text = self.get_index_text(None, name_obj)
+        index_text = self.get_index_text(None, name)
         if index_text:
             entry = ('single', index_text, full_name, '')
             if SPHINX_VERSION_14:
