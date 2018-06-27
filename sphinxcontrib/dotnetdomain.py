@@ -628,12 +628,12 @@ class DotNetIndex(Index):
     localname = l_('.NET Module Index')
     shortname = l_('.NET modules')
 
-    def generate(self, doc_names=None):
+    def generate(self, docnames=None):
         content = {}
         objects = sorted(self.domain.data['objects'].items(),
                          key=lambda x: x[1][0].lower())
         for obj_name, (obj_doc_name, obj_type) in objects:
-            if doc_names and obj_doc_name not in doc_names:
+            if docnames and obj_doc_name not in docnames:
                 continue
             if obj_type != 'namespace':
                 continue
