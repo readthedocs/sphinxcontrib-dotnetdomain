@@ -360,23 +360,23 @@ class DotNetXRefMixin(object):
             refs.append(alias_target(found.group('parent')))
         return refs
 
-    def make_xref(self, rolename, domain, target_name, innernode=nodes.emphasis,
-                  contnode=None):
+    def make_xref(self, rolename, domain, target_name,
+                  innernode=nodes.emphasis, contnode=None):
         if not rolename:
             return contnode or innernode(target_name, target_name)
 
         field_node = None
         refs = self.split_refs(target_name)
         refs.reverse()
-        for (target_name, target_alias) in refs:
-            if not target_alias and target_name.startswith(('.', '~')):
-                prefix, target_name = target_name[0], target_name[1:]
+        for (target_name_, target_alias) in refs:
+            if not target_alias and target_name_.startswith(('.', '~')):
+                prefix, target_name_ = target_name_[0], target_name_[1:]
                 if prefix == '.':
-                    target_alias = target_name[1:]
+                    target_alias = target_name_[1:]
                 elif prefix == '~':
-                    target_alias = target_name.split('.')[-1]
+                    target_alias = target_name_.split('.')[-1]
             if target_alias is None:
-                target_alias = target_name
+                target_alias = target_name_
             ref_node = addnodes.pending_xref(
                 '',
                 refdomain=domain,
@@ -385,7 +385,7 @@ class DotNetXRefMixin(object):
                 reftarget=target_alias,
                 refspecific=True,
             )
-            ref_node += nodes.Text(target_name, target_name)
+            ref_node += nodes.Text(target_name_, target_name_)
             if field_node is None:
                 field_node = nodes.inline()
                 field_node += ref_node
