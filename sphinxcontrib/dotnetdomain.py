@@ -149,7 +149,7 @@ class DotNetObject(ObjectDescription):
             )
         raise ValueError('Could not parse signature: {0}'.format(signature))
 
-    def handle_signature(self, sig_input, signode):
+    def handle_signature(self, sig, signode):
         """Parses out pieces from construct signatures
 
         Parses out prefix and argument list from construct definition. This is
@@ -166,10 +166,10 @@ class DotNetObject(ObjectDescription):
             nesting/etc
         """
         try:
-            sig = self.parse_signature(sig_input.strip())
+            sig = self.parse_signature(sig.strip())
         except ValueError:
             self.env.warn(self.env.docname,
-                          'Parsing signature failed: "{}"'.format(sig_input),
+                          'Parsing signature failed: "{}"'.format(sig),
                           self.lineno)
             raise
 
