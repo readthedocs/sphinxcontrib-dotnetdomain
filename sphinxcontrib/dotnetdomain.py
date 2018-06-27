@@ -763,7 +763,7 @@ class DotNetDomain(Domain):
     def resolve_xref(self, env, fromdocname, builder, typ, target,
                      node, contnode):
         prefix = node.get('dn:prefix')
-        searchorder = node.hasattr('refspecific') and 1 or 0
+        searchorder = 1 if node.hasattr('refspecific') else 0
 
         found = self.find_obj(env, prefix, target, typ, searchorder)
         try:
