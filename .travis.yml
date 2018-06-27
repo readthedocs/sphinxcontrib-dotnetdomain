@@ -3,21 +3,24 @@ sudo: true
 matrix:
   include:
     - python: 2.7
-      env:
-        - TOXENV=py27-sphinx13
-        - TOXENV=py27-sphinx14
-        - TOXENV=py27-sphinx15
+      env: TOXENV=py27-sphinx13
+    - python: 2.7
+      env: TOXENV=py27-sphinx14
+    - python: 2.7
+      env: TOXENV=py27-sphinx15
 
     - python: 3.5
-      env:
-        - TOXENV=py35-sphinx13
-        - TOXENV=py35-sphinx14
-        - TOXENV=py35-sphinx15
+      env: TOXENV=py35-sphinx13
+    - python: 3.5
+      env: TOXENV=py35-sphinx14
+    - python: 3.5
+      env: TOXENV=py35-sphinx15
 
     - python: 3.6
-      env:
-        - TOXENV=lint
-        - TOXENV=docs
+      env: TOXENV=lint
+
+    - python: 3.6
+      env: TOXENV=docs
 install:
   - pip install tox
 script:
