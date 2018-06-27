@@ -760,20 +760,22 @@ class DotNetDomain(Domain):
             return None
         return newname, objects.get(newname, (None, None))
 
-    def resolve_xref(self, env, doc, builder, obj_type, target, node,
-                     contnode):
+    def resolve_xref(self, env, fromdocname, builder, typ, target,
+                     node, contnode):
         prefix = node.get('dn:prefix')
         searchorder = node.hasattr('refspecific') and 1 or 0
 
-        found = self.find_obj(env, prefix, target, obj_type, searchorder)
+        found = self.find_obj(env, prefix, target, typ, searchorder)
         try:
             # pylint: disable=unbalanced-tuple-unpacking
             obj_name, obj = found
-            (obj_doc_name, obj_type) = obj
+            (obj_doc_name, typ) = obj
             if obj_name is None or obj_doc_name is None:
                 return None
-            return make_refnode(builder, doc, obj_doc_name, obj_name, contnode,
-                                obj_name)
+            return make_refnode(
+                builder, fromdocname, obj_doc_name,
+                obj_name, contnode, obj_name
+            )
         except (TypeError, ValueError):
             return None
 
