@@ -706,10 +706,10 @@ class DotNetDomain(Domain):
                 self._role2type.setdefault(role, []).append(name)
         self.objtypes_for_role = self._role2type.get
 
-    def clear_doc(self, doc_name):
+    def clear_doc(self, docname):
         objects = list(self.data['objects'].items())
         for obj_name, (obj_doc_name, _) in objects:
-            if doc_name == obj_doc_name:
+            if docname == obj_doc_name:
                 del self.data['objects'][obj_name]
 
     def find_obj(self, env, prefix, name, obj_type, searchorder=0):
