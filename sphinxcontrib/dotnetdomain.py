@@ -149,7 +149,7 @@ class DotNetObject(ObjectDescription):
             )
         raise ValueError('Could not parse signature: {0}'.format(signature))
 
-    def handle_signature(self, sig_input, signode):
+    def handle_signature(self, sig, signode):
         """Parses out pieces from construct signatures
 
         Parses out prefix and argument list from construct definition. This is
@@ -166,10 +166,10 @@ class DotNetObject(ObjectDescription):
             nesting/etc
         """
         try:
-            sig = self.parse_signature(sig_input.strip())
+            sig = self.parse_signature(sig.strip())
         except ValueError:
             self.env.warn(self.env.docname,
-                          'Parsing signature failed: "{}"'.format(sig_input),
+                          'Parsing signature failed: "{}"'.format(sig),
                           self.lineno)
             raise
 
@@ -207,13 +207,13 @@ class DotNetObject(ObjectDescription):
             return sig.full_name(), sig.full_name()
         return sig.full_name(), sig.prefix
 
-    def add_target_and_index(self, name_obj, sig, signode):
+    def add_target_and_index(self, name, sig, signode):
         """Add objects to the domain list of objects
 
         This uses the directive short name along with the full object name to
         create objects and nodes that are type and name unique.
         """
-        full_name = name_obj[0]
+        full_name = name[0]
         target_name = '{0}-{1}'.format(self.short_name, full_name)
         if target_name not in self.state.document.ids:
             signode['names'].append(target_name)
@@ -237,7 +237,7 @@ class DotNetObject(ObjectDescription):
             finally:
                 objects[full_name] = (self.env.docname, self.objtype)
 
-        index_text = self.get_index_text(None, name_obj)
+        index_text = self.get_index_text(None, name)
         if index_text:
             entry = ('single', index_text, full_name, '')
             if SPHINX_VERSION_14:
@@ -360,23 +360,23 @@ class DotNetXRefMixin(object):
             refs.append(alias_target(found.group('parent')))
         return refs
 
-    def make_xref(self, rolename, domain, target_name, innernode=nodes.emphasis,
-                  contnode=None):
+    def make_xref(self, rolename, domain, target_name,
+                  innernode=nodes.emphasis, contnode=None):
         if not rolename:
             return contnode or innernode(target_name, target_name)
 
         field_node = None
         refs = self.split_refs(target_name)
         refs.reverse()
-        for (target_name, target_alias) in refs:
-            if not target_alias and target_name.startswith(('.', '~')):
-                prefix, target_name = target_name[0], target_name[1:]
+        for (target_name_, target_alias) in refs:
+            if not target_alias and target_name_.startswith(('.', '~')):
+                prefix, target_name_ = target_name_[0], target_name_[1:]
                 if prefix == '.':
-                    target_alias = target_name[1:]
+                    target_alias = target_name_[1:]
                 elif prefix == '~':
-                    target_alias = target_name.split('.')[-1]
+                    target_alias = target_name_.split('.')[-1]
             if target_alias is None:
-                target_alias = target_name
+                target_alias = target_name_
             ref_node = addnodes.pending_xref(
                 '',
                 refdomain=domain,
@@ -385,7 +385,7 @@ class DotNetXRefMixin(object):
                 reftarget=target_alias,
                 refspecific=True,
             )
-            ref_node += nodes.Text(target_name, target_name)
+            ref_node += nodes.Text(target_name_, target_name_)
             if field_node is None:
                 field_node = nodes.inline()
                 field_node += ref_node
@@ -628,12 +628,12 @@ class DotNetIndex(Index):
     localname = l_('.NET Module Index')
     shortname = l_('.NET modules')
 
-    def generate(self, doc_names=None):
+    def generate(self, docnames=None):
         content = {}
         objects = sorted(self.domain.data['objects'].items(),
                          key=lambda x: x[1][0].lower())
         for obj_name, (obj_doc_name, obj_type) in objects:
-            if doc_names and obj_doc_name not in doc_names:
+            if docnames and obj_doc_name not in docnames:
                 continue
             if obj_type != 'namespace':
                 continue
@@ -706,10 +706,10 @@ class DotNetDomain(Domain):
                 self._role2type.setdefault(role, []).append(name)
         self.objtypes_for_role = self._role2type.get
 
-    def clear_doc(self, doc_name):
+    def clear_doc(self, docname):
         objects = list(self.data['objects'].items())
         for obj_name, (obj_doc_name, _) in objects:
-            if doc_name == obj_doc_name:
+            if docname == obj_doc_name:
                 del self.data['objects'][obj_name]
 
     def find_obj(self, env, prefix, name, obj_type, searchorder=0):
@@ -760,24 +760,27 @@ class DotNetDomain(Domain):
             return None
         return newname, objects.get(newname, (None, None))
 
-    def resolve_xref(self, env, doc, builder, obj_type, target, node,
-                     contnode):
+    def resolve_xref(self, env, fromdocname, builder, typ, target,
+                     node, contnode):
         prefix = node.get('dn:prefix')
-        searchorder = node.hasattr('refspecific') and 1 or 0
+        searchorder = 1 if node.hasattr('refspecific') else 0
 
-        found = self.find_obj(env, prefix, target, obj_type, searchorder)
+        found = self.find_obj(env, prefix, target, typ, searchorder)
         try:
             # pylint: disable=unbalanced-tuple-unpacking
             obj_name, obj = found
-            (obj_doc_name, obj_type) = obj
+            (obj_doc_name, typ) = obj
             if obj_name is None or obj_doc_name is None:
                 return None
-            return make_refnode(builder, doc, obj_doc_name, obj_name, contnode,
-                                obj_name)
+            return make_refnode(
+                builder, fromdocname, obj_doc_name,
+                obj_name, contnode, obj_name
+            )
         except (TypeError, ValueError):
             return None
 
-    def resolve_any_xref(self, env, doc, builder, target, node, contnode):
+    def resolve_any_xref(self, env, fromdocname, builder, target,
+                         node, contnode):
         """Look for any references, without object type
 
         This always searches in "refspecific" mode
@@ -789,7 +792,7 @@ class DotNetDomain(Domain):
         if match is not None:
             (name, obj) = match
             results.append(('dn:' + self.role_for_objtype(obj[1]),
-                            make_refnode(builder, doc, obj[0], name, contnode,
+                            make_refnode(builder, fromdocname, obj[0], name, contnode,
                                          name)))
         return results
 
