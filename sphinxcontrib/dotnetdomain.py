@@ -20,6 +20,9 @@ from sphinx.util.docfields import Field, TypedField
 from docutils.parsers.rst import directives
 from docutils import nodes
 
+from sphinx.util import logging
+
+logger = logging.getLogger(__name__)
 
 SPHINX_VERSION_14 = (sphinx_version_info >= (1, 4))
 
@@ -168,9 +171,7 @@ class DotNetObject(ObjectDescription):
         try:
             sig = self.parse_signature(sig.strip())
         except ValueError:
-            self.env.warn(self.env.docname,
-                          'Parsing signature failed: "{}"'.format(sig),
-                          self.lineno)
+            logger.warning('Parsing signature failed: "{}"'.format(sig), location=self.env.docname)
             raise
 
         prefix = self.env.ref_context.get('dn:prefix', None)
@@ -361,7 +362,8 @@ class DotNetXRefMixin(object):
         return refs
 
     def make_xref(self, rolename, domain, target_name,
-                  innernode=nodes.emphasis, contnode=None):
+                  innernode: "Type[TextlikeNode]" = addnodes.literal_emphasis,
+                  contnode = None, env = None):
         if not rolename:
             return contnode or innernode(target_name, target_name)
 
