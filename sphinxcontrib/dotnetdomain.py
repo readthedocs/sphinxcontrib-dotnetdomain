@@ -361,7 +361,9 @@ class DotNetXRefMixin(object):
         return refs
 
     def make_xref(self, rolename, domain, target_name,
-                  innernode=nodes.emphasis, contnode=None):
+                  innernode=nodes.emphasis, contnode=None, env=None,
+                  inliner= None, location=None):
+
         if not rolename:
             return contnode or innernode(target_name, target_name)
 
