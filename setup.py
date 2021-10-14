@@ -10,7 +10,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='sphinxcontrib-dotnetdomain',
-    version='0.4',
+    version='0.5',
     url='http://github.com/rtfd/sphinxcontrib-dotnetdomain',
     download_url='http://pypi.python.org/pypi/sphinxcontrib-dotnetdomain',
     license='MIT',
@@ -33,7 +33,7 @@ setup(
     platforms='any',
     packages=find_packages(),
     include_package_data=True,
-    install_requires=['Sphinx<1.6'],
+    install_requires=['Sphinx>=3'],
     namespace_packages=['sphinxcontrib'],
     test_suite='nose.collector',
     tests_require=['nose', 'mock'],
