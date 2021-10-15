@@ -167,11 +167,15 @@ class DotNetObject(ObjectDescription):
         """
         try:
             sig = self.parse_signature(sig.strip())
-        except ValueError:
-            self.env.warn(self.env.docname,
-                          'Parsing signature failed: "{}"'.format(sig),
-                          self.lineno)
-            raise
+        except ValueError as e:
+            # TODO: I don't know exactly what to do here. 
+            # In my tests I had:
+            # AttributeError: 'BuildEnvironment' object has no attribute 'warn'
+
+            # self.env.warn(self.env.docname,
+            #              'Parsing signature failed: "{}"'.format(sig),
+            #              self.lineno)
+            raise e
 
         prefix = self.env.ref_context.get('dn:prefix', None)
 
