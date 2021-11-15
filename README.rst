@@ -1,6 +1,12 @@
 Sphinx .Net Domain
 ==================
 
+.. image:: http://unmaintained.tech/badge.svg
+  :target: http://unmaintained.tech
+  :alt: No Maintenance Intended
+
+----
+
 .. image:: https://readthedocs.org/projects/sphinxcontrib-dotnetdomain/badge/?version=latest
    :target: https://sphinxcontrib-dotnetdomain.readthedocs.org
    :alt: Documentation Status
