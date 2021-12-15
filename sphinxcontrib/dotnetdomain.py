@@ -10,7 +10,7 @@ from six import iteritems
 
 from sphinx import addnodes, version_info as sphinx_version_info
 from sphinx.domains import Domain, ObjType, Index
-from sphinx.locale import l_
+from sphinx.locale import _
 from sphinx.directives import ObjectDescription
 from sphinx.roles import AnyXRefRole
 from sphinx.domains.python import _pseudo_parse_arglist
@@ -167,11 +167,15 @@ class DotNetObject(ObjectDescription):
         """
         try:
             sig = self.parse_signature(sig.strip())
-        except ValueError:
-            self.env.warn(self.env.docname,
-                          'Parsing signature failed: "{}"'.format(sig),
-                          self.lineno)
-            raise
+        except ValueError as e:
+            # TODO: I don't know exactly what to do here. 
+            # In my tests I had:
+            # AttributeError: 'BuildEnvironment' object has no attribute 'warn'
+
+            # self.env.warn(self.env.docname,
+            #              'Parsing signature failed: "{}"'.format(sig),
+            #              self.lineno)
+            raise e
 
         prefix = self.env.ref_context.get('dn:prefix', None)
 
@@ -265,7 +269,7 @@ class DotNetObject(ObjectDescription):
 
     @classmethod
     def get_type(cls):
-        return ObjType(l_(cls.long_name), cls.short_name, cls.long_name, 'obj')
+        return ObjType(_(cls.long_name), cls.short_name, cls.long_name, 'obj')
 
 
 class DotNetObjectNested(DotNetObject):
@@ -361,7 +365,9 @@ class DotNetXRefMixin(object):
         return refs
 
     def make_xref(self, rolename, domain, target_name,
-                  innernode=nodes.emphasis, contnode=None):
+                  innernode=nodes.emphasis, contnode=None, env=None,
+                  inliner= None, location=None):
+
         if not rolename:
             return contnode or innernode(target_name, target_name)
 
@@ -416,13 +422,13 @@ class DotNetCallable(DotNetObject):
 
     has_arguments = True
     doc_field_types = [
-        DotNetTypedField('arguments', label=l_('Arguments'),
+        DotNetTypedField('arguments', label=_('Arguments'),
                          names=('argument', 'arg', 'parameter', 'param'),
                          typerolename='obj', typenames=('paramtype', 'type'),
                          can_collapse=True),
-        Field('returnvalue', label=l_('Returns'), has_arg=False,
+        Field('returnvalue', label=_('Returns'), has_arg=False,
               names=('returns', 'return')),
-        DotNetBasicField('returntype', label=l_('Return type'), has_arg=False,
+        DotNetBasicField('returntype', label=_('Return type'), has_arg=False,
                          names=('rtype',), bodyrolename='obj'),
     ]
 
@@ -625,8 +631,8 @@ class DotNetIndex(Index):
     """Index subclass to provide the .NET module index"""
 
     name = 'modindex'
-    localname = l_('.NET Module Index')
-    shortname = l_('.NET modules')
+    localname = _('.NET Module Index')
+    shortname = _('.NET modules')
 
     def generate(self, docnames=None):
         content = {}
