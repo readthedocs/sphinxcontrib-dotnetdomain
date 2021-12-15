@@ -5,14 +5,8 @@ Sphinx .Net Domain
   :target: http://unmaintained.tech
   :alt: No Maintenance Intended
 
-----
-
-.. image:: https://readthedocs.org/projects/sphinxcontrib-dotnetdomain/badge/?version=latest
-   :target: https://sphinxcontrib-dotnetdomain.readthedocs.org
-   :alt: Documentation Status
-
-.. image:: https://travis-ci.org/rtfd/sphinxcontrib-dotnetdomain.svg?branch=master
-   :target: https://travis-ci.org/rtfd/sphinxcontrib-dotnetdomain
+This project is no longer maintained
+------------------------------------
 
 This package provides a .NET domain for Sphinx documentation.
 
